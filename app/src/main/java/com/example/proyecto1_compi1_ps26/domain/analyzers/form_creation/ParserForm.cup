@@ -1,0 +1,326 @@
+/***************************************** PACKAGES AND IMPORTS *****************************************/
+package com.example.proyecto1_compi1_ps26.domain.analyzers.form_creation;
+
+import java_cup.runtime.*;
+
+import java.util.*;
+
+import com.example.proyecto1_compi1_ps26.domain.entities.*;
+
+/***************************************** CUP *****************************************/
+
+parser code {:
+    // Utils
+    LexerForm lex;
+    private ArrayList<ErrorReport> syntaxErrors;
+
+    // Parser and Lexer Connection
+    public ParserForm(LexerForm lex) {
+        super(lex);
+        this.lex = lex;
+        this.syntaxErrors = new ArrayList<>();
+    }
+
+    // Getters
+    public LexerForm getLexer() {
+        return this.lex;
+    }
+
+    public ArrayList<ErrorReport> getSyntaxErrors() {
+        return this.syntaxErrors;
+    }
+
+    // Overwrite error methods
+    public void syntax_error(Symbol cur_token) {
+        String symbol = symbl_name_from_id(cur_token.sym);
+        String lexeme = "";
+        if (cur_token.value != null) {
+            lexeme = cur_token.value.toString();
+        }
+        Integer line = cur_token.left;
+        Integer column = cur_token.right;
+        StringBuilder description = new StringBuilder();
+
+        if (expected_token_ids().isEmpty()) {
+            description.append("No se esperaba ningun simbolo");
+        } else {
+            description.append("Se esperaba [");
+            for (Integer expected_token_id : expected_token_ids()) {
+                if (!symbl_name_from_id(expected_token_id).equals("error")) {
+                    description.append(symbl_name_from_id(expected_token_id));
+                    description.append(" ");
+                }
+            }
+            description.append("]");
+        }
+
+        this.syntaxErrors.add(new ErrorReport(lexeme + "/" + symbol, line, column, "Sintactico", description.toString()));
+    }
+
+    public void report_error(String message, Object info) {
+        String lexeme = "";
+        String symbol = "";
+        String  description = "";
+        Integer column = -1;
+        Integer line = -1;
+        try {
+            Symbol cur_token = (Symbol) info;
+            symbol = symbl_name_from_id(cur_token.sym);
+            line = cur_token.left;
+            column = cur_token.right;
+            if (cur_token != null) {
+                lexeme = cur_token.value.toString();
+            }
+            if (message != null) {
+                description = message;
+            }
+
+            this.syntaxErrors.add(new ErrorReport(lexeme + "/" + symbol, line, column, "Sintactico", description));
+        } catch (Exception e) {
+            this.syntaxErrors.add(new ErrorReport(lexeme + "/" + symbol, line, column, "Sintactico", message));
+        }
+    }
+
+    public void unrecovered_syntax_error(Symbol cur_token) {
+        this.syntaxErrors.add(new ErrorReport("", cur_token.left, cur_token.right, "Sintactico", "Error de sintaxis severo detectado, revise bien el codigo."));
+    }
+:}
+
+/***************************************** DECLARATIONS *****************************************/
+// Tokens - Terminales
+terminal SUMA, RESTA, MULTIPLICACION, DIVISION, POTENCIA, MODULO, PARENTESIS_ABIERTO, PARENTESIS_CERRADO;
+terminal IGUALDAD, DIFERENTE, MAYOR, MENOR, MAYOR_IGUAL, MENOR_IGUAL;
+terminal AND, OR, NOT;
+terminal IGUAL, COMA, CORCHETE_ABIERTO, CORCHETE_CERRADO, DOS_PUNTOS, COMODIN, LLAVE_ABIERTO, LLAVE_CERRADO, PUNTO_COMA;
+terminal NUMBER, STRING, SPECIAL;
+terminal OPEN_QUESTION, SECTION, TABLE, TEXT, DROP_QUESTION, SELECT_QUESTION, MULTIPLE_QUESTION;
+terminal RED, BLUE, GREEN, PURPLE, SKY, YELLOW, BLACK, WHITE;
+terminal VERTICAL, HORIZONTAL;
+terminal MONO, SANS_SERIF, CURSIVE;
+terminal LINE, DOTTED, DOUBLE;
+terminal WIDTH, HEIGHT, LABEL, DRAW, POINT_X, POINT_Y, ORIENTATION, ELEMENTS, STYLES, CONTENT, OPTIONS, CORRECT, WHO_IS_THAT_POKEMON;
+terminal COLOR, BACKGROUND_COLOR, FONT_FAMILY, TEXT_SIZE, BORDER;
+terminal IF, ELSE, WHILE, DO, FOR, IN;
+terminal HEXADECIMAL;
+terminal ID, PUNTO;
+terminal TEXTO;
+
+terminal Double NUMERO_DECIMAL;
+terminal Integer NUMERO_ENTERO;
+
+// No Terminales
+non terminal contenido, instruccion;
+non terminal variable, invocacion, seccion, tabla, pregunta, bloque_codigo;
+non terminal if, while, do, for;
+non terminal tipo_dato, asignacion, valor;
+non terminal operacion_matematica, concatenacion_string;
+non terminal parametros_draw, lista_parametros;
+non terminal color, rgb, hsl, color_literal;
+non terminal lista_atributo, atributo;
+non terminal tipo_orientacion, lista_elemento, lista_estilo, lista_opcion, asignacion_correcto;
+non terminal elemento, texto;
+non terminal estilo, tipo_fuente, tipo_borde;
+non terminal lista_correcto;
+non terminal operacion_lra, fin_if, continuar_else, condicion_for;
+non terminal operacion_and, operacion_not, operacion_relacional;
+non terminal operador_sr, operador_md, operador_pm;
+non terminal tn, g, fn;
+non terminal operador_relacional, tipo_valor;
+
+/***************************************** PRECEDENCES *****************************************/
+precedence left OR;
+precedence left AND;
+precedence right NOT;
+
+precedence left SUMA, RESTA;
+precedence left MULTIPLICACION, DIVISION;
+precedence right POTENCIA;
+precedence left MODULO;
+
+/***************************************** GRAMMAR *****************************************/
+start with contenido;
+
+contenido ::= contenido instruccion |
+                    instruccion;
+
+instruccion ::= variable |
+                invocacion |
+                seccion |
+                tabla |
+                pregunta |
+                bloque_codigo;
+
+bloque_codigo ::= if |
+                  while |
+                  do |
+                  for;
+
+variable ::= tipo_dato ID asignacion |
+            ID IGUAL tipo_valor;
+
+tipo_dato ::= NUMBER | STRING | SPECIAL;
+
+asignacion ::= IGUAL tipo_valor |
+                /* empty */;
+
+tipo_valor ::= valor | concatenacion_string;
+
+//valor ::= operacion_matematica |
+//        concatenacion_string |
+//        pregunta;
+
+valor ::= operacion_matematica |
+        TEXTO |
+        pregunta;
+
+invocacion ::= ID PUNTO DRAW PARENTESIS_ABIERTO parametros_draw;
+
+parametros_draw ::= PARENTESIS_CERRADO |
+                    lista_parametros PARENTESIS_CERRADO;
+
+lista_parametros ::= lista_parametros COMA operacion_matematica |
+                    operacion_matematica;
+
+color ::= HEXADECIMAL |
+        rgb |
+        hsl |
+        color_literal;
+
+rgb ::= PARENTESIS_ABIERTO operacion_matematica COMA operacion_matematica COMA operacion_matematica PARENTESIS_CERRADO;
+
+hsl ::= MENOR operacion_matematica COMA operacion_matematica COMA operacion_matematica MAYOR;
+
+color_literal ::= RED |
+                BLUE |
+                GREEN |
+                PURPLE |
+                SKY |
+                YELLOW |
+                BLACK |
+                WHITE;
+
+seccion ::= SECTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+
+lista_atributo ::= lista_atributo COMA atributo |
+                    atributo;
+
+atributo ::= WIDTH DOS_PUNTOS operacion_matematica |
+            HEIGHT DOS_PUNTOS operacion_matematica |
+            POINT_X DOS_PUNTOS operacion_matematica |
+            POINT_Y DOS_PUNTOS operacion_matematica |
+            ORIENTATION DOS_PUNTOS tipo_orientacion |
+            ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_elemento LLAVE_CERRADO |
+            STYLES CORCHETE_ABIERTO lista_estilo CORCHETE_CERRADO |
+            CONTENT DOS_PUNTOS concatenacion_string |
+            LABEL DOS_PUNTOS concatenacion_string |
+            OPTIONS DOS_PUNTOS LLAVE_ABIERTO lista_opcion LLAVE_CERRADO |
+            CORRECT DOS_PUNTOS asignacion_correcto;
+
+tipo_orientacion ::= VERTICAL | HORIZONTAL;
+
+lista_elemento ::= lista_elemento COMA elemento |
+                    elemento;
+
+elemento ::= seccion |
+            pregunta |
+            tabla |
+            texto;
+
+lista_estilo ::= lista_estilo COMA estilo |
+                estilo;
+
+estilo ::= COLOR DOS_PUNTOS color |
+            BACKGROUND_COLOR DOS_PUNTOS color |
+            FONT_FAMILY DOS_PUNTOS tipo_fuente |
+            TEXT_SIZE DOS_PUNTOS operacion_matematica |
+            BORDER DOS_PUNTOS PARENTESIS_ABIERTO operacion_matematica COMA tipo_borde COMA color PARENTESIS_CERRADO;
+
+tipo_fuente ::= MONO | SANS_SERIF | CURSIVE;
+
+tipo_borde ::= LINE | DOTTED | DOUBLE;
+
+lista_opcion ::= lista_opcion COMA concatenacion_string |
+                concatenacion_string;
+
+asignacion_correcto ::= operacion_matematica |
+                        LLAVE_ABIERTO lista_correcto LLAVE_CERRADO;
+
+lista_correcto ::= lista_correcto COMA operacion_matematica |
+                    operacion_matematica;
+
+tabla ::= TABLE CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+
+texto ::= TEXT CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+
+pregunta ::= OPEN_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
+            DROP_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
+            SELECT_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
+            MULTIPLE_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+
+if ::= IF PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO fin_if;
+
+fin_if ::= ELSE continuar_else | /* empty */;
+
+continuar_else ::= if | LLAVE_ABIERTO contenido LLAVE_CERRADO;
+
+while ::= WHILE PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO;
+
+do ::= DO LLAVE_ABIERTO contenido LLAVE_CERRADO WHILE PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO;
+
+for ::= FOR PARENTESIS_ABIERTO condicion_for PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO;
+
+condicion_for ::= variable PUNTO_COMA operacion_lra PUNTO_COMA variable |
+                ID IN operacion_matematica PUNTO PUNTO operacion_matematica;
+
+operacion_lra ::= operacion_lra OR operacion_and |
+                  operacion_and;
+
+operacion_and ::= operacion_and AND operacion_not |
+                  operacion_not;
+
+operacion_not ::= NOT operacion_lra |
+                  operacion_relacional;
+
+operacion_relacional ::= operacion_matematica operador_relacional operacion_matematica |
+                         operacion_matematica;
+
+operacion_matematica ::= operacion_matematica operador_sr tn |
+                            tn;
+
+tn ::= tn operador_md g |
+        g;
+
+g ::= g operador_pm fn |
+        fn;
+
+fn ::= PARENTESIS_ABIERTO operacion_matematica PARENTESIS_CERRADO |
+        NUMERO_DECIMAL |
+        NUMERO_ENTERO |
+        ID |
+        COMODIN;
+
+operador_sr ::= SUMA |
+                RESTA;
+
+operador_md ::= MULTIPLICACION |
+                DIVISION;
+
+operador_pm ::= POTENCIA |
+                MODULO;
+
+//concatenacion_string ::= concatenacion_string SUMA operacion_string |
+//                operacion_string;
+
+concatenacion_string ::= concatenacion_string SUMA valor |
+                        valor SUMA valor;
+
+//operacion_string ::= TEXTO |
+//                    ID |
+//                    operacion_matematica;
+
+operador_relacional ::= IGUALDAD |
+                        DIFERENTE |
+                        MAYOR |
+                        MENOR |
+                        MAYOR_IGUAL |
+                        MENOR_IGUAL;
