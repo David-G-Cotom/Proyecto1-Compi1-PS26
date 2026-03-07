@@ -165,10 +165,6 @@ asignacion ::= IGUAL tipo_valor |
 
 tipo_valor ::= valor | concatenacion_string;
 
-//valor ::= operacion_matematica |
-//        concatenacion_string |
-//        pregunta;
-
 valor ::= operacion_matematica |
         TEXTO |
         pregunta;
@@ -308,15 +304,8 @@ operador_md ::= MULTIPLICACION |
 operador_pm ::= POTENCIA |
                 MODULO;
 
-//concatenacion_string ::= concatenacion_string SUMA operacion_string |
-//                operacion_string;
-
 concatenacion_string ::= concatenacion_string SUMA valor |
                         valor SUMA valor;
-
-//operacion_string ::= TEXTO |
-//                    ID |
-//                    operacion_matematica;
 
 operador_relacional ::= IGUALDAD |
                         DIFERENTE |
