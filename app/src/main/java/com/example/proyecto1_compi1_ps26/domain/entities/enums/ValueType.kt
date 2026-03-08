@@ -5,5 +5,7 @@ enum class ValueType {
     DECIMAL,
     STRING,
     QUESTION,
-    BOOLEAN
+    BOOLEAN,
+    NULL,
+    COMODIN
 }

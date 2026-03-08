@@ -6,6 +6,10 @@ import java_cup.runtime.*;
 import java.util.*;
 
 import com.example.proyecto1_compi1_ps26.domain.entities.*;
+import com.example.proyecto1_compi1_ps26.domain.entities.enums.*;
+import com.example.proyecto1_compi1_ps26.domain.ast.*;
+import com.example.proyecto1_compi1_ps26.domain.ast.expressions.*;
+import com.example.proyecto1_compi1_ps26.domain.ast.statements.*;
 
 /***************************************** CUP *****************************************/
 
@@ -84,6 +88,21 @@ parser code {:
     public void unrecovered_syntax_error(Symbol cur_token) {
         this.syntaxErrors.add(new ErrorReport("", cur_token.left, cur_token.right, "Sintactico", "Error de sintaxis severo detectado, revise bien el codigo."));
     }
+
+    // Support Methods
+    private If buildIf(int line, int column, Expression cond, ArrayList<ASTNode> body, Object fin) {
+        if (fin == null)
+            return new If(line, column, cond, body, new ArrayList<>(), null);
+
+        if (fin instanceof ArrayList)
+            return new If(line, column, cond, body, new ArrayList<>(), (ArrayList<ASTNode>) fin);
+
+        If nested = (If) fin;
+        ArrayList<ElseIf> branches = new ArrayList<>();
+        branches.add(new ElseIf(nested.getCondition(), nested.getThenStatement()));
+        branches.addAll(nested.getElseIfStatement());
+        return new If(line, column, cond, body, branches, nested.getElseStatement());
+    }
 :}
 
 /***************************************** DECLARATIONS *****************************************/
@@ -101,31 +120,48 @@ terminal LINE, DOTTED, DOUBLE;
 terminal WIDTH, HEIGHT, LABEL, DRAW, POINT_X, POINT_Y, ORIENTATION, ELEMENTS, STYLES, CONTENT, OPTIONS, CORRECT, WHO_IS_THAT_POKEMON;
 terminal COLOR, BACKGROUND_COLOR, FONT_FAMILY, TEXT_SIZE, BORDER;
 terminal IF, ELSE, WHILE, DO, FOR, IN;
-terminal HEXADECIMAL;
-terminal ID, PUNTO;
-terminal TEXTO;
+terminal PUNTO;
+terminal NUMBER_POKEMON;
 
 terminal Double NUMERO_DECIMAL;
 terminal Integer NUMERO_ENTERO;
+terminal String HEXADECIMAL, ID, TEXTO;
 
 // No Terminales
-non terminal contenido, instruccion;
-non terminal variable, invocacion, seccion, tabla, pregunta, bloque_codigo;
-non terminal if, while, do, for;
-non terminal tipo_dato, asignacion, valor;
-non terminal operacion_matematica, concatenacion_string;
-non terminal parametros_draw, lista_parametros;
-non terminal color, rgb, hsl, color_literal;
-non terminal lista_atributo, atributo;
-non terminal tipo_orientacion, lista_elemento, lista_estilo, lista_opcion, asignacion_correcto;
-non terminal elemento, texto;
-non terminal estilo, tipo_fuente, tipo_borde;
-non terminal lista_correcto;
-non terminal operacion_lra, fin_if, continuar_else, condicion_for;
-non terminal operacion_and, operacion_not, operacion_relacional;
-non terminal operador_sr, operador_md, operador_pm;
-non terminal tn, g, fn;
-non terminal operador_relacional, tipo_valor;
+non terminal ArrayList<ASTNode> contenido;
+non terminal ASTNode instruccion, bloque_codigo;
+non terminal VarDecl variable;
+non terminal Call invocacion;
+non terminal Section seccion;
+non terminal Table tabla;
+non terminal Expression pregunta;
+non terminal If if;
+non terminal While while;
+non terminal DoWhile do;
+non terminal Statement for;
+non terminal VariableType tipo_dato;
+non terminal Expression asignacion, valor, tipo_valor;
+non terminal Expression operacion_matematica, concatenacion_string;
+non terminal ArrayList<Expression> parametros_draw, lista_parametros;
+non terminal ColorExpression color;
+non terminal Rgb rgb;
+non terminal Hsl hsl;
+non terminal LiteralColor color_literal;
+non terminal LinkedHashMap<String,Object> lista_atributo;
+non terminal AbstractMap.SimpleEntry<String,Object> atributo;
+non terminal OrientationType tipo_orientacion;
+non terminal ArrayList<ASTNode> lista_elemento;
+non terminal ASTNode elemento;
+non terminal Text texto;
+non terminal LinkedHashMap<String,StyleValue> lista_estilo;
+non terminal AbstractMap.SimpleEntry<String,StyleValue> estilo;
+non terminal FontFamily tipo_fuente;
+non terminal BorderType tipo_borde;
+non terminal ArrayList<Expression> lista_opcion, lista_correcto;
+non terminal PokemonFunction pokemon_func;
+non terminal Object asignacion_correcto, fin_if, continuar_else, condicion_for;
+non terminal Expression operacion_lra, operacion_and, operacion_not, operacion_relacional, tn, g, fn;
+non terminal OperatorType operador_sr, operador_md, operador_pm, operador_relacional;
 
 /***************************************** PRECEDENCES *****************************************/
 precedence left OR;
@@ -140,176 +176,367 @@ precedence left MODULO;
 /***************************************** GRAMMAR *****************************************/
 start with contenido;
 
-contenido ::= contenido instruccion |
-                    instruccion;
+contenido ::= contenido:c instruccion:i {:
+                    c.add(i);
+                    RESULT = c;
+                :} |
+                instruccion:i {:
+                    ArrayList<ASTNode> lista = new ArrayList<>();
+                    lista.add(i);
+                    RESULT = lista;
+                :};
 
-instruccion ::= variable |
-                invocacion |
-                seccion |
-                tabla |
-                pregunta |
-                bloque_codigo;
+instruccion ::= variable:v {: RESULT = v; :} |
+                invocacion:i {: RESULT = i; :} |
+                seccion:s {: RESULT = s; :} |
+                tabla:t {: RESULT = t; :} |
+                pregunta:p {: RESULT = p; :} |
+                bloque_codigo:bc {: RESULT = bc; :};
 
-bloque_codigo ::= if |
-                  while |
-                  do |
-                  for;
+bloque_codigo ::= if:i {: RESULT = i; :} |
+                  while:w {: RESULT = w; :} |
+                  do:d {: RESULT = d; :} |
+                  for:f {: RESULT = f; :};
 
-variable ::= tipo_dato ID asignacion |
-            ID IGUAL tipo_valor;
+variable ::= tipo_dato:td ID:id asignacion:a {:
+                RESULT = new VarDecl(idleft, idright, id, td, a);
+            :} |
+            ID:id IGUAL tipo_valor:tv {:
+                RESULT = new VarDecl(idleft, idright, id, null, tv);
+             :};
 
-tipo_dato ::= NUMBER | STRING | SPECIAL;
+tipo_dato ::= NUMBER {: RESULT = VariableType.NUMBER; :} |
+                STRING {: RESULT = VariableType.STRING; :} |
+                SPECIAL {: RESULT = VariableType.SPECIAL; :};
 
-asignacion ::= IGUAL tipo_valor |
-                /* empty */;
+asignacion ::= IGUAL tipo_valor:tv {: RESULT = tv; :} |
+                /* empty */ {: RESULT = null; :};
 
-tipo_valor ::= valor | concatenacion_string;
+tipo_valor ::= valor:v {: RESULT = v; :} |
+                concatenacion_string:cs {: RESULT = cs; :};
 
-valor ::= operacion_matematica |
-        TEXTO |
-        pregunta;
+valor ::= operacion_matematica:om {: RESULT = om; :} |
+        TEXTO:t {: RESULT = new Literal(tleft, tright, t, ValueType.STRING); :} |
+        pregunta:p {: RESULT = p; :};
 
-invocacion ::= ID PUNTO DRAW PARENTESIS_ABIERTO parametros_draw;
+invocacion ::= ID:id PUNTO DRAW PARENTESIS_ABIERTO parametros_draw:pd {:
+                    RESULT = new Call(idleft, idright, id, pd);
+                :};
 
-parametros_draw ::= PARENTESIS_CERRADO |
-                    lista_parametros PARENTESIS_CERRADO;
+parametros_draw ::= PARENTESIS_CERRADO {: RESULT = new ArrayList<Expression>(); :} |
+                    lista_parametros:lp PARENTESIS_CERRADO {: RESULT = lp; :};
 
-lista_parametros ::= lista_parametros COMA operacion_matematica |
-                    operacion_matematica;
+lista_parametros ::= lista_parametros:lp COMA operacion_matematica:om {:
+                        lp.add(om);
+                        RESULT = lp;
+                    :} |
+                    operacion_matematica:om {:
+                        ArrayList<Expression> lp = new ArrayList<>();
+                        lp.add(om);
+                        RESULT = lp;
+                    :};
 
-color ::= HEXADECIMAL |
-        rgb |
-        hsl |
-        color_literal;
+color ::= HEXADECIMAL:h {: RESULT = new Hex(hleft, hright, h); :} |
+        rgb:rgb {: RESULT = rgb; :} |
+        hsl:hsl {: RESULT = hsl; :} |
+        color_literal:cl {: RESULT = cl; :};
 
-rgb ::= PARENTESIS_ABIERTO operacion_matematica COMA operacion_matematica COMA operacion_matematica PARENTESIS_CERRADO;
+rgb ::= PARENTESIS_ABIERTO:pa operacion_matematica:r COMA operacion_matematica:g COMA operacion_matematica:b PARENTESIS_CERRADO {:
+            RESULT = new Rgb(paleft, paright, r, g, b);
+        :};
 
-hsl ::= MENOR operacion_matematica COMA operacion_matematica COMA operacion_matematica MAYOR;
+hsl ::= MENOR:m operacion_matematica:h COMA operacion_matematica:s COMA operacion_matematica:l MAYOR {:
+            RESULT = new Hsl(mleft, mright, h, s, l);
+        :};
 
-color_literal ::= RED |
-                BLUE |
-                GREEN |
-                PURPLE |
-                SKY |
-                YELLOW |
-                BLACK |
-                WHITE;
+color_literal ::= RED:r {: RESULT = new LiteralColor(rleft, rright, ColorType.RED); :} |
+                BLUE:b {: RESULT = new LiteralColor(bleft, bright, ColorType.BLUE); :} |
+                GREEN:g {: RESULT = new LiteralColor(gleft, gright, ColorType.GREEN); :} |
+                PURPLE:p {: RESULT = new LiteralColor(pleft, pright, ColorType.PURPLE); :} |
+                SKY:s {: RESULT = new LiteralColor(sleft, sright, ColorType.SKY); :} |
+                YELLOW:y {: RESULT = new LiteralColor(yleft, yright, ColorType.YELLOW); :} |
+                BLACK:b {: RESULT = new LiteralColor(bleft, bright, ColorType.BLACK); :} |
+                WHITE:w {: RESULT = new LiteralColor(wleft, wright, ColorType.WHITE); :};
 
-seccion ::= SECTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+lista_atributo ::= lista_atributo:la COMA atributo:a {:
+                        la.put(a.getKey(), a.getValue());
+                        RESULT = la;
+                    :} |
+                    atributo:a {:
+                        LinkedHashMap<String,Object> map = new LinkedHashMap<>();
+                        map.put(a.getKey(), a.getValue());
+                        RESULT = map;
+                    :};
 
-lista_atributo ::= lista_atributo COMA atributo |
-                    atributo;
+atributo ::= WIDTH DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("width", (Object)om); :} |
+            HEIGHT DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("height", (Object)om); :} |
+            POINT_X DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("pintX", (Object)om); :} |
+            POINT_Y DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("pointY", (Object)om); :} |
+            ORIENTATION DOS_PUNTOS tipo_orientacion:to {: RESULT = new AbstractMap.SimpleEntry<>("orientation", (Object)to); :} |
+            ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_elemento:le LLAVE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("elements", (Object)le); :} |
+            STYLES CORCHETE_ABIERTO lista_estilo:le CORCHETE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("styles", (Object) new Styles(le)); :} |
+            CONTENT DOS_PUNTOS concatenacion_string:cs {: RESULT = new AbstractMap.SimpleEntry<>("content", (Object)cs); :} |
+            LABEL DOS_PUNTOS concatenacion_string:cs {: RESULT = new AbstractMap.SimpleEntry<>("label", (Object)cs); :} |
+            OPTIONS:o DOS_PUNTOS LLAVE_ABIERTO lista_opcion:lo LLAVE_CERRADO {:
+                RESULT = new AbstractMap.SimpleEntry<>("options", (Object) new LiteralOptions(lo));
+            :} |
+            OPTIONS DOS_PUNTOS pokemon_func:pf {: RESULT = new AbstractMap.SimpleEntry<>("options", (Object) new PokemonOptions(pf)); :} |
+            CORRECT DOS_PUNTOS asignacion_correcto:ac {: RESULT = new AbstractMap.SimpleEntry<>("correct", (Object)ac); :};
 
-atributo ::= WIDTH DOS_PUNTOS operacion_matematica |
-            HEIGHT DOS_PUNTOS operacion_matematica |
-            POINT_X DOS_PUNTOS operacion_matematica |
-            POINT_Y DOS_PUNTOS operacion_matematica |
-            ORIENTATION DOS_PUNTOS tipo_orientacion |
-            ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_elemento LLAVE_CERRADO |
-            STYLES CORCHETE_ABIERTO lista_estilo CORCHETE_CERRADO |
-            CONTENT DOS_PUNTOS concatenacion_string |
-            LABEL DOS_PUNTOS concatenacion_string |
-            OPTIONS DOS_PUNTOS LLAVE_ABIERTO lista_opcion LLAVE_CERRADO |
-            CORRECT DOS_PUNTOS asignacion_correcto;
+tipo_orientacion ::= VERTICAL {: RESULT = OrientationType.VERTICAL; :} |
+                    HORIZONTAL {: RESULT = OrientationType.HORIZONTAL; :};
 
-tipo_orientacion ::= VERTICAL | HORIZONTAL;
+lista_elemento ::= lista_elemento:le COMA elemento:e {:
+                        le.add(e);
+                        RESULT = le;
+                    :} |
+                    elemento:e {:
+                        ArrayList<ASTNode> l = new ArrayList<>();
+                        l.add(e);
+                        RESULT = l;
+                    :};
 
-lista_elemento ::= lista_elemento COMA elemento |
-                    elemento;
+elemento ::= seccion:s {: RESULT = s; :} |
+            pregunta:p {: RESULT = p; :} |
+            tabla:t {: RESULT = t; :} |
+            texto:t {: RESULT = t; :};
 
-elemento ::= seccion |
-            pregunta |
-            tabla |
-            texto;
+lista_estilo ::= lista_estilo:le COMA estilo:e {:
+                    le.put(e.getKey(), e.getValue());
+                    RESULT = le;
+                :} |
+                estilo:e {:
+                    LinkedHashMap<String,StyleValue> map = new LinkedHashMap<>();
+                    map.put(e.getKey(), e.getValue());
+                    RESULT = map;
+                :};
 
-lista_estilo ::= lista_estilo COMA estilo |
-                estilo;
+estilo ::= COLOR DOS_PUNTOS color:c {: RESULT = new AbstractMap.SimpleEntry<>("color", new ColorStyleValue(c)); :} |
+            BACKGROUND_COLOR DOS_PUNTOS color:c {: RESULT = new AbstractMap.SimpleEntry<>("background color", new ColorStyleValue(c)); :} |
+            FONT_FAMILY DOS_PUNTOS tipo_fuente:tf {: RESULT = new AbstractMap.SimpleEntry<>("font family", new FontStyleValue(tf)); :} |
+            TEXT_SIZE DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("text size", new TextSizeStyleValue(om)); :} |
+            BORDER DOS_PUNTOS PARENTESIS_ABIERTO operacion_matematica:om COMA tipo_borde:tb COMA color:c PARENTESIS_CERRADO {:
+                RESULT = new AbstractMap.SimpleEntry<>("border", new BorderStyleValue(om, tb, c));
+            :};
 
-estilo ::= COLOR DOS_PUNTOS color |
-            BACKGROUND_COLOR DOS_PUNTOS color |
-            FONT_FAMILY DOS_PUNTOS tipo_fuente |
-            TEXT_SIZE DOS_PUNTOS operacion_matematica |
-            BORDER DOS_PUNTOS PARENTESIS_ABIERTO operacion_matematica COMA tipo_borde COMA color PARENTESIS_CERRADO;
+tipo_fuente ::= MONO {: RESULT = FontFamily.MONO; :} |
+                SANS_SERIF {: RESULT = FontFamily.SANS_SERIF; :} |
+                CURSIVE {: RESULT = FontFamily.CURSIVE; :};
 
-tipo_fuente ::= MONO | SANS_SERIF | CURSIVE;
+tipo_borde ::= LINE {: RESULT = BorderType.LINE; :} |
+                DOTTED {: RESULT = BorderType.DOTTED; :} |
+                DOUBLE {: RESULT = BorderType.DOUBLE; :};
 
-tipo_borde ::= LINE | DOTTED | DOUBLE;
+lista_opcion ::= lista_opcion:lo COMA concatenacion_string:cs {:
+                    lo.add(cs);
+                    RESULT = lo;
+                :} |
+                concatenacion_string:cs {:
+                    ArrayList<Expression> l = new ArrayList<>();
+                    l.add(cs);
+                    RESULT = l;
+                :};
 
-lista_opcion ::= lista_opcion COMA concatenacion_string |
-                concatenacion_string;
+asignacion_correcto ::= operacion_matematica:om {: RESULT = om; :} |
+                        LLAVE_ABIERTO lista_correcto:lc LLAVE_CERRADO {: RESULT = lc; :};
 
-asignacion_correcto ::= operacion_matematica |
-                        LLAVE_ABIERTO lista_correcto LLAVE_CERRADO;
+lista_correcto ::= lista_correcto:lc COMA operacion_matematica:om {:
+                        lc.add(om);
+                        RESULT = lc;
+                    :} |
+                    operacion_matematica:om {:
+                        ArrayList<Expression> l = new ArrayList<>();
+                        l.add(om);
+                        RESULT = l;
+                    :};
 
-lista_correcto ::= lista_correcto COMA operacion_matematica |
-                    operacion_matematica;
+pokemon_func ::= WHO_IS_THAT_POKEMON:witp PARENTESIS_ABIERTO NUMBER_POKEMON COMA operacion_matematica:from COMA operacion_matematica:to PARENTESIS_CERRADO {:
+                    RESULT = new PokemonFunction(witpleft, witpright, PokemonQueryType.NUMBER, from, to);
+                :};
 
-tabla ::= TABLE CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+seccion ::= SECTION:s CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                RESULT = new Section(
+                    sleft,
+                    sright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("pointX"),
+                    (Expression) la.get("pointY"),
+                    (OrientationType) la.get("orientation"),
+                    (ArrayList<Statement>) la.get("elements"),
+                    (Styles) la.get("styles")
+                );
+            :};
 
-texto ::= TEXT CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+tabla ::= TABLE:t CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                ArrayList<Statement> elems = (ArrayList<Statement>) la.get("elements");
+                if (elems == null) elems = new ArrayList<>();
+                RESULT = new Table(
+                    tleft,
+                    tright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("pointX"),
+                    (Expression) la.get("pointY"),
+                    elems,
+                    (Styles) la.get("styles")
+                );
+            :};
 
-pregunta ::= OPEN_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
-            DROP_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
-            SELECT_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO |
-            MULTIPLE_QUESTION CORCHETE_ABIERTO lista_atributo CORCHETE_CERRADO;
+texto ::= TEXT:t CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                RESULT = new Text(
+                    tleft,
+                    tright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("content"),
+                    (Styles) la.get("styles")
+                );
+            :};
 
-if ::= IF PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO fin_if;
+pregunta ::= OPEN_QUESTION:oq CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                RESULT = new OpenQuestion(
+                    oqleft,
+                    oqright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("label"),
+                    (Styles) la.get("styles")
+                );
+            :} |
+            DROP_QUESTION:dq CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                RESULT = new DropQuestion(
+                    dqleft,
+                    dqright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("label"),
+                    (OptionsSource) la.get("options"),
+                    (Expression) la.get("correct"),
+                    (Styles) la.get("styles")
+                );
+            :} |
+            SELECT_QUESTION:sq CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                Object correctRaw = la.get("correct");
+                Expression correct = (correctRaw instanceof Expression) ? (Expression) correctRaw : null;
+                RESULT = new SelectQuestion(
+                    sqleft,
+                    sqright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("label"),
+                    (OptionsSource) la.get("options"),
+                    correct,
+                    (Styles) la.get("styles")
+                );
+            :} |
+            MULTIPLE_QUESTION:mq CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
+                Object correctRaw = la.get("correct");
+                ArrayList<Expression> correct = null;
+                if (correctRaw instanceof ArrayList) {
+                    correct = (ArrayList<Expression>) correctRaw;
+                } else if (correctRaw instanceof Expression) {
+                    correct = new ArrayList<>();
+                    correct.add((Expression) correctRaw);
+                }
+                RESULT = new MultipleQuestion(
+                    mqleft,
+                    mqright,
+                    (Expression) la.get("width"),
+                    (Expression) la.get("height"),
+                    (Expression) la.get("label"),
+                    (OptionsSource) la.get("options"),
+                    correct,
+                    (Styles) la.get("styles")
+                );
+            :};
 
-fin_if ::= ELSE continuar_else | /* empty */;
+if ::= IF:i PARENTESIS_ABIERTO operacion_lra:olra PARENTESIS_CERRADO LLAVE_ABIERTO contenido:c LLAVE_CERRADO fin_if:fi {:
+            RESULT = buildIf(ileft, iright, olra, c, fi);
+        :};
 
-continuar_else ::= if | LLAVE_ABIERTO contenido LLAVE_CERRADO;
+fin_if ::= ELSE continuar_else:ce {: RESULT = ce; :} |
+            /* empty */ {: RESULT = null; :};
 
-while ::= WHILE PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO;
+continuar_else ::= if:i {: RESULT = i; :} |
+                    LLAVE_ABIERTO contenido:c LLAVE_CERRADO {: RESULT = c; :};
 
-do ::= DO LLAVE_ABIERTO contenido LLAVE_CERRADO WHILE PARENTESIS_ABIERTO operacion_lra PARENTESIS_CERRADO;
+while ::= WHILE:w PARENTESIS_ABIERTO operacion_lra:olra PARENTESIS_CERRADO LLAVE_ABIERTO contenido:c LLAVE_CERRADO {:
+            RESULT = new While(wleft, wright, olra, c);
+        :};
 
-for ::= FOR PARENTESIS_ABIERTO condicion_for PARENTESIS_CERRADO LLAVE_ABIERTO contenido LLAVE_CERRADO;
+do ::= DO:d LLAVE_ABIERTO contenido:c LLAVE_CERRADO WHILE PARENTESIS_ABIERTO operacion_lra:olra PARENTESIS_CERRADO {:
+            RESULT = new DoWhile(dleft, dright, olra, c);
+        :};
 
-condicion_for ::= variable PUNTO_COMA operacion_lra PUNTO_COMA variable |
-                ID IN operacion_matematica PUNTO PUNTO operacion_matematica;
+for ::= FOR:f PARENTESIS_ABIERTO condicion_for:cf PARENTESIS_CERRADO LLAVE_ABIERTO contenido:c LLAVE_CERRADO {:
+            Object[] fc = (Object[]) cf;
+            if (fc[0].equals("simple")) {
+                RESULT = new For(
+                    fleft,
+                    fright,
+                    (Statement)  fc[1],
+                    (Expression) fc[2],
+                    (Statement)  fc[3],
+                    c
+                );
+            } else {
+                RESULT = new ForRange(
+                    fleft,
+                    fright,
+                    (String)   fc[1],
+                    (Expression) fc[2],
+                    (Expression) fc[3],
+                    c
+                );
+            }
+        :};
 
-operacion_lra ::= operacion_lra OR operacion_and |
-                  operacion_and;
+condicion_for ::= variable:v PUNTO_COMA operacion_lra:olra PUNTO_COMA variable:up {: RESULT = new Object[]{ "simple", v, olra, up }; :} |
+                ID:id IN operacion_matematica:om1 PUNTO PUNTO operacion_matematica:om2 {: RESULT = new Object[]{ "range", id, om1, om2 }; :};
 
-operacion_and ::= operacion_and AND operacion_not |
-                  operacion_not;
+operacion_lra ::= operacion_lra:l OR:o operacion_and:r {: RESULT = new BinaryExpression(oleft, oright, l, r, OperatorType.OR); :} |
+                  operacion_and:op {: RESULT = op; :};
 
-operacion_not ::= NOT operacion_lra |
-                  operacion_relacional;
+operacion_and ::= operacion_and:l AND:a operacion_not:r {: RESULT = new BinaryExpression(aleft, aright, l, r, OperatorType.AND); :} |
+                  operacion_not:op {: RESULT = op; :};
 
-operacion_relacional ::= operacion_matematica operador_relacional operacion_matematica |
-                         operacion_matematica;
+operacion_not ::= NOT:n operacion_lra:r {: RESULT = new UnaryExpression(nleft, nright, OperatorType.NOT, r); :} |
+                  operacion_relacional:op {: RESULT = op; :};
 
-operacion_matematica ::= operacion_matematica operador_sr tn |
-                            tn;
+operacion_relacional ::= operacion_matematica:l operador_relacional:o operacion_matematica:r {: RESULT = new BinaryExpression(oleft, oright, l, r, o); :} |
+                         operacion_matematica:op {: RESULT = op; :};
 
-tn ::= tn operador_md g |
-        g;
+operacion_matematica ::= operacion_matematica:l operador_sr:o tn:r {: RESULT = new BinaryExpression(oleft, oright, l, r, o); :} |
+                            tn:op {: RESULT = op; :};
 
-g ::= g operador_pm fn |
-        fn;
+tn ::= tn:l operador_md:o g:r {: RESULT = new BinaryExpression(oleft, oright, l, r, o); :} |
+        g:op {: RESULT = op; :};
 
-fn ::= PARENTESIS_ABIERTO operacion_matematica PARENTESIS_CERRADO |
-        NUMERO_DECIMAL |
-        NUMERO_ENTERO |
-        ID |
-        COMODIN;
+g ::= g:l operador_pm:o fn:r {: RESULT = new BinaryExpression(oleft, oright, l, r, o); :} |
+        fn:op {: RESULT = op; :};
 
-operador_sr ::= SUMA |
-                RESTA;
+fn ::= PARENTESIS_ABIERTO operacion_matematica:om PARENTESIS_CERRADO {: RESULT = om; :} |
+        NUMERO_DECIMAL:nd {: RESULT = new Literal(ndleft, ndright, nd, ValueType.DECIMAL); :} |
+        NUMERO_ENTERO:ne {: RESULT = new Literal(neleft, neright, ne, ValueType.WHOLE); :} |
+        ID:id {: RESULT = new Identifier(idleft, idright, id); :} |
+        COMODIN:c {: RESULT = new Literal(cleft, cright, (String) c, ValueType.COMODIN); :};
 
-operador_md ::= MULTIPLICACION |
-                DIVISION;
+operador_sr ::= SUMA {: RESULT = OperatorType.SUMA; :} |
+                RESTA {: RESULT = OperatorType.RESTA; :};
 
-operador_pm ::= POTENCIA |
-                MODULO;
+operador_md ::= MULTIPLICACION {: RESULT = OperatorType.MULTIPLICACION; :} |
+                DIVISION {: RESULT = OperatorType.DIVISION; :};
 
-concatenacion_string ::= concatenacion_string SUMA valor |
-                        valor SUMA valor;
+operador_pm ::= POTENCIA {: RESULT = OperatorType.POTENCIA; :} |
+                MODULO {: RESULT = OperatorType.MODULO; :};
 
-operador_relacional ::= IGUALDAD |
-                        DIFERENTE |
-                        MAYOR |
-                        MENOR |
-                        MAYOR_IGUAL |
-                        MENOR_IGUAL;
+concatenacion_string ::= concatenacion_string:l SUMA:s valor:r {: RESULT = new BinaryExpression(sleft, sright, l, r, OperatorType.SUMA); :} |
+                        valor:l SUMA:s valor:r {: RESULT = new BinaryExpression(sleft, sright, l, r, OperatorType.SUMA); :};
+
+operador_relacional ::= IGUALDAD {: RESULT = OperatorType.IGUALDAD; :} |
+                        DIFERENTE {: RESULT = OperatorType.DIFERENTE; :} |
+                        MAYOR {: RESULT = OperatorType.MAYOR; :} |
+                        MENOR {: RESULT = OperatorType.MENOR; :} |
+                        MAYOR_IGUAL {: RESULT = OperatorType.MAYOR_IGUAL; :} |
+                        MENOR_IGUAL {: RESULT = OperatorType.MENOR_IGUAL; :};

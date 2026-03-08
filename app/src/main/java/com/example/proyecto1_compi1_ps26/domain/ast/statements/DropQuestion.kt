@@ -1,12 +1,17 @@
 package com.example.proyecto1_compi1_ps26.domain.ast.statements
 
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Expression
-import com.example.proyecto1_compi1_ps26.domain.entities.Style
+import com.example.proyecto1_compi1_ps26.domain.entities.OptionsSource
+import com.example.proyecto1_compi1_ps26.domain.entities.Styles
 
 class DropQuestion(
     line: Int,
     column: Int,
-    val attributes: Map<String, Expression>,
-    val styles: Style?
-) : Statement(line, column) {
+    val width: Expression?,
+    val height: Expression?,
+    val label: Expression,
+    val options: OptionsSource,
+    val correct: Expression?,
+    val styles: Styles?
+) : Expression(line, column) {
 }

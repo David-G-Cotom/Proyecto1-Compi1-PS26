@@ -11,7 +11,7 @@ public class symForm {
   public static final int HORIZONTAL = 47;
   public static final int CORCHETE_CERRADO = 22;
   public static final int SELECT_QUESTION = 36;
-  public static final int HEXADECIMAL = 78;
+  public static final int HEXADECIMAL = 82;
   public static final int TEXT_SIZE = 70;
   public static final int DIVISION = 5;
   public static final int MENOR_IGUAL = 15;
@@ -19,10 +19,11 @@ public class symForm {
   public static final int POTENCIA = 6;
   public static final int CORCHETE_ABIERTO = 21;
   public static final int MAYOR = 12;
-  public static final int TEXTO = 81;
+  public static final int NUMBER_POKEMON = 79;
+  public static final int TEXTO = 84;
   public static final int SANS_SERIF = 49;
   public static final int DROP_QUESTION = 35;
-  public static final int NUMERO_ENTERO = 83;
+  public static final int NUMERO_ENTERO = 81;
   public static final int SPECIAL = 30;
   public static final int BLUE = 39;
   public static final int YELLOW = 43;
@@ -33,7 +34,7 @@ public class symForm {
   public static final int OPEN_QUESTION = 31;
   public static final int BLACK = 44;
   public static final int DOUBLE = 53;
-  public static final int NUMERO_DECIMAL = 82;
+  public static final int NUMERO_DECIMAL = 80;
   public static final int BACKGROUND_COLOR = 68;
   public static final int NOT = 18;
   public static final int TEXT = 34;
@@ -62,7 +63,7 @@ public class symForm {
   public static final int CORRECT = 65;
   public static final int CONTENT = 63;
   public static final int EOF = 0;
-  public static final int PUNTO = 80;
+  public static final int PUNTO = 78;
   public static final int VERTICAL = 46;
   public static final int SUMA = 2;
   public static final int LINE = 51;
@@ -76,7 +77,7 @@ public class symForm {
   public static final int IF = 72;
   public static final int POINT_X = 58;
   public static final int PARENTESIS_CERRADO = 9;
-  public static final int ID = 79;
+  public static final int ID = 83;
   public static final int DOTTED = 52;
   public static final int COLOR = 67;
   public static final int MULTIPLICACION = 4;
@@ -171,12 +172,13 @@ public class symForm {
   "DO",
   "FOR",
   "IN",
+  "PUNTO",
+  "NUMBER_POKEMON",
+  "NUMERO_DECIMAL",
+  "NUMERO_ENTERO",
   "HEXADECIMAL",
   "ID",
-  "PUNTO",
-  "TEXTO",
-  "NUMERO_DECIMAL",
-  "NUMERO_ENTERO"
+  "TEXTO"
   };
 }
 

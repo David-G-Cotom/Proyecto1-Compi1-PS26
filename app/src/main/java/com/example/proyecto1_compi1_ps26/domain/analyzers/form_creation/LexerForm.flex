@@ -153,6 +153,8 @@ ID = _?{Letter}({Letter}|_|{WholeNumber})*
     "correct" { return symbol(symForm.CORRECT); }
     "who_is_that_pokemon" { return symbol(symForm.WHO_IS_THAT_POKEMON); }
 
+    "NUMBER" { return symbol(symForm.NUMBER_POKEMON); }
+
     \""color"\" { return symbol(symForm.COLOR); }
     \""background color"\" { return symbol(symForm.BACKGROUND_COLOR); }
     \""font family"\" { return symbol(symForm.FONT_FAMILY); }
