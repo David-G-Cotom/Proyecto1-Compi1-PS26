@@ -2572,7 +2572,7 @@ class CUP$ParserForm$actions {
 		int cleft = ((java_cup.runtime.Symbol)CUP$ParserForm$stack.peek()).left;
 		int cright = ((java_cup.runtime.Symbol)CUP$ParserForm$stack.peek()).right;
 		Object c = (Object)((java_cup.runtime.Symbol) CUP$ParserForm$stack.peek()).value;
-		 RESULT = new Literal(cleft, cright, (String) c, ValueType.COMODIN); 
+		 RESULT = new Literal(cleft, cright, (String) c, ValueType.WILDCARD); 
               CUP$ParserForm$result = parser.getSymbolFactory().newSymbol("fn",47, ((java_cup.runtime.Symbol)CUP$ParserForm$stack.peek()), ((java_cup.runtime.Symbol)CUP$ParserForm$stack.peek()), RESULT);
             }
           return CUP$ParserForm$result;

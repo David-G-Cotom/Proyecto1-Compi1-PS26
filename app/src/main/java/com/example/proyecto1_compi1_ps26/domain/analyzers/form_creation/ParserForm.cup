@@ -520,7 +520,7 @@ fn ::= PARENTESIS_ABIERTO operacion_matematica:om PARENTESIS_CERRADO {: RESULT =
         NUMERO_DECIMAL:nd {: RESULT = new Literal(ndleft, ndright, nd, ValueType.DECIMAL); :} |
         NUMERO_ENTERO:ne {: RESULT = new Literal(neleft, neright, ne, ValueType.WHOLE); :} |
         ID:id {: RESULT = new Identifier(idleft, idright, id); :} |
-        COMODIN:c {: RESULT = new Literal(cleft, cright, (String) c, ValueType.COMODIN); :};
+        COMODIN:c {: RESULT = new Literal(cleft, cright, (String) c, ValueType.WILDCARD); :};
 
 operador_sr ::= SUMA {: RESULT = OperatorType.SUMA; :} |
                 RESTA {: RESULT = OperatorType.RESTA; :};

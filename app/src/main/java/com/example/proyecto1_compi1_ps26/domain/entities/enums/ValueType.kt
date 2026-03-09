@@ -7,5 +7,5 @@ enum class ValueType {
     QUESTION,
     BOOLEAN,
     NULL,
-    COMODIN
+    WILDCARD
 }
