@@ -6,7 +6,9 @@ class Environment(val parent: Environment? = null) {
 
     private val variables = HashMap<String, SymbolValue>()
 
-    fun define(name: String, type: VariableType, value: Any?, line: Int, column: Int) {
+    // tipo id valor
+    // tipo id valorDefault
+    fun define(name: String, type: VariableType, value: Any, line: Int, column: Int) {
         if (this.variables.containsKey(name)) {
             throw Exception("Error: Variable $name ya definida en este ambito")
         }
@@ -14,7 +16,7 @@ class Environment(val parent: Environment? = null) {
         this.variables[name] = SymbolValue(name, type, value, line, column)
     }
 
-    private fun validateTypeAndValue(name: String, type: VariableType, value: Any?) {
+    private fun validateTypeAndValue(name: String, type: VariableType, value: Any) {
         val typeCorrect = when (type) {
             VariableType.NUMBER -> value is Int || value is Double
             VariableType.STRING -> value is String
@@ -35,7 +37,8 @@ class Environment(val parent: Environment? = null) {
         throw Exception("Error: Variable $name no definida")
     }
 
-    fun assign(name: String, type: VariableType, value: Any?, line: Int, column: Int) {
+    // id valor
+    fun assign(name: String, value: Any) {
         if (this.variables.containsKey(name)) {
             val symbol = this.variables[name]!!
             this.validateTypeAndValue(name, symbol.type, value)
@@ -43,7 +46,7 @@ class Environment(val parent: Environment? = null) {
             return
         }
         if (this.parent != null) {
-            this.parent.assign(name, type, value, line, column)
+            this.parent.assign(name, value)
             return
         }
         throw Exception("Error: Variable $name no definida")

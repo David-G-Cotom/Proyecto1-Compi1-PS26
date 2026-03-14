@@ -7,9 +7,9 @@ import com.example.proyecto1_compi1_ps26.domain.entities.Styles
 class SelectQuestion(
     line: Int,
     column: Int,
-    val width  : Expression?,
-    val height : Expression?,
-    val label  : Expression?,
+    val width: Expression?,
+    val height: Expression?,
+    val label: Expression?,
     val options: OptionsSource,
     val correct: Expression?,
     val styles: Styles?

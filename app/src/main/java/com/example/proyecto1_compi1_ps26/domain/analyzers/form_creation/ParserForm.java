@@ -772,12 +772,14 @@ public class ParserForm extends java_cup.runtime.lr_parser {
 
     // Support Methods
     private If buildIf(int line, int column, Expression cond, ArrayList<ASTNode> body, Object fin) {
-        if (fin == null)
-            return new If(line, column, cond, body, new ArrayList<>(), null);
+        if (fin == null) {  // If
+            return new If(line, column, cond, body, null, null);
+        }
 
-        if (fin instanceof ArrayList)
-            return new If(line, column, cond, body, new ArrayList<>(), (ArrayList<ASTNode>) fin);
-
+        if (fin instanceof ArrayList) { // If else
+            return new If(line, column, cond, body, null, (ArrayList<ASTNode>) fin);
+        }
+        // If else If else ...
         If nested = (If) fin;
         ArrayList<ElseIf> branches = new ArrayList<>();
         branches.add(new ElseIf(nested.getCondition(), nested.getThenStatement()));

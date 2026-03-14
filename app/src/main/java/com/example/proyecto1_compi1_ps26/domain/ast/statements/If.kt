@@ -7,7 +7,7 @@ class If(
     line: Int,
     column: Int,
     val condition: Expression,
-    val thenStatement: ArrayList<ASTNode>?,
+    val thenStatement: ArrayList<ASTNode>,
     val elseIfStatement: ArrayList<ElseIf>?,
     val elseStatement: ArrayList<ASTNode>?
 ) : Statement(line, column) {
