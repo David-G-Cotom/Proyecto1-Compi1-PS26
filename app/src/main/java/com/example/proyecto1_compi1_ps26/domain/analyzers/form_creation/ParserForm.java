@@ -753,7 +753,7 @@ public class ParserForm extends java_cup.runtime.lr_parser {
             symbol = symbl_name_from_id(cur_token.sym);
             line = cur_token.left;
             column = cur_token.right;
-            if (cur_token != null) {
+            if (cur_token.value != null) {
                 lexeme = cur_token.value.toString();
             }
             if (message != null) {
