@@ -182,6 +182,7 @@ contenido ::= contenido:c instruccion:i {:
                     c.add(i);
                     RESULT = c;
                 :} |
+                contenido:c error {: RESULT = c; :} |
                 instruccion:i {:
                     ArrayList<ASTNode> lista = new ArrayList<>();
                     lista.add(i);
@@ -232,6 +233,7 @@ lista_parametros ::= lista_parametros:lp COMA operacion_matematica:om {:
                         lp.add(om);
                         RESULT = lp;
                     :} |
+                    lista_parametros:lp COMA error {: RESULT = lp; :} |
                     operacion_matematica:om {:
                         ArrayList<Expression> lp = new ArrayList<>();
                         lp.add(om);
@@ -264,11 +266,13 @@ lista_atributo ::= lista_atributo:la COMA atributo:a {:
                         la.put(a.getKey(), a.getValue());
                         RESULT = la;
                     :} |
+                    lista_atributo:m COMA error {: RESULT = m; :} |
                     atributo:a {:
                         LinkedHashMap<String,Object> map = new LinkedHashMap<>();
                         map.put(a.getKey(), a.getValue());
                         RESULT = map;
-                    :};
+                    :} |
+                    error {: RESULT = new LinkedHashMap<String,Object>(); :};
 
 atributo ::= WIDTH DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("width", (Object)om); :} |
             HEIGHT DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("height", (Object)om); :} |
@@ -292,11 +296,13 @@ lista_elemento ::= lista_elemento:le COMA elemento:e {:
                         le.add(e);
                         RESULT = le;
                     :} |
+                    lista_elemento:le COMA error {: RESULT = le; :} |
                     elemento:e {:
                         ArrayList<ASTNode> l = new ArrayList<>();
                         l.add(e);
                         RESULT = l;
-                    :};
+                    :} |
+                    error {: RESULT = new ArrayList<ASTNode>(); :};
 
 elemento ::= seccion:s {: RESULT = s; :} |
             pregunta:p {: RESULT = p; :} |
@@ -307,11 +313,13 @@ lista_estilo ::= lista_estilo:le COMA estilo:e {:
                     le.put(e.getKey(), e.getValue());
                     RESULT = le;
                 :} |
+                lista_estilo:m COMA error {: RESULT = m; :} |
                 estilo:e {:
                     LinkedHashMap<String,StyleValue> map = new LinkedHashMap<>();
                     map.put(e.getKey(), e.getValue());
                     RESULT = map;
-                :};
+                :} |
+                error {: RESULT = new LinkedHashMap<String,StyleValue>(); :};
 
 estilo ::= COLOR DOS_PUNTOS color:c {: RESULT = new AbstractMap.SimpleEntry<>("color", new ColorStyleValue(c)); :} |
             BACKGROUND_COLOR DOS_PUNTOS color:c {: RESULT = new AbstractMap.SimpleEntry<>("background color", new ColorStyleValue(c)); :} |
@@ -333,11 +341,13 @@ lista_opcion ::= lista_opcion:lo COMA concatenacion_string:cs {:
                     lo.add(cs);
                     RESULT = lo;
                 :} |
+                lista_opcion:lo COMA error {: RESULT = lo; :} |
                 concatenacion_string:cs {:
                     ArrayList<Expression> l = new ArrayList<>();
                     l.add(cs);
                     RESULT = l;
-                :};
+                :} |
+                error {: RESULT = new ArrayList<Expression>(); :};
 
 asignacion_correcto ::= operacion_matematica:om {: RESULT = om; :} |
                         LLAVE_ABIERTO lista_correcto:lc LLAVE_CERRADO {: RESULT = lc; :};
@@ -346,11 +356,13 @@ lista_correcto ::= lista_correcto:lc COMA operacion_matematica:om {:
                         lc.add(om);
                         RESULT = lc;
                     :} |
+                    lista_correcto:lc COMA error {: RESULT = lc; :} |
                     operacion_matematica:om {:
                         ArrayList<Expression> l = new ArrayList<>();
                         l.add(om);
                         RESULT = l;
-                    :};
+                    :} |
+                    error {: RESULT = new ArrayList<Expression>(); :};
 
 pokemon_func ::= WHO_IS_THAT_POKEMON:witp PARENTESIS_ABIERTO NUMBER_POKEMON COMA operacion_matematica:from COMA operacion_matematica:to PARENTESIS_CERRADO {:
                     RESULT = new PokemonFunction(witpleft, witpright, PokemonQueryType.NUMBER, from, to);
@@ -522,7 +534,8 @@ fn ::= PARENTESIS_ABIERTO operacion_matematica:om PARENTESIS_CERRADO {: RESULT =
         NUMERO_DECIMAL:nd {: RESULT = new Literal(ndleft, ndright, nd, ValueType.DECIMAL); :} |
         NUMERO_ENTERO:ne {: RESULT = new Literal(neleft, neright, ne, ValueType.WHOLE); :} |
         ID:id {: RESULT = new Identifier(idleft, idright, id); :} |
-        COMODIN:c {: RESULT = new Literal(cleft, cright, (String) c, ValueType.WILDCARD); :};
+        COMODIN:c {: RESULT = new Wildcard(cleft, cright); :} |
+        RESTA:r fn:f {: RESULT = new UnaryExpression(rleft, rright, OperatorType.NEGATIVO, f); :};
 
 operador_sr ::= SUMA {: RESULT = OperatorType.SUMA; :} |
                 RESTA {: RESULT = OperatorType.RESTA; :};

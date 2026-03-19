@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            // Sugerencia de extensión para que el picker la resalte
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("*/*"))
         }
         launcher.launch(intent)

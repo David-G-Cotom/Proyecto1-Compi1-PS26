@@ -51,7 +51,6 @@
             android:padding="8dp"
             android:scrollbars="vertical" />
 
-        <!-- Fila de botones de edición -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -90,10 +89,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         ESTADO 2 - RESPUESTA: Solo botones de respuesta
-         Visible cuando: state == RESPONSE
-         ───────────────────────────────────────────────────────────── -->
     <LinearLayout
         android:id="@+id/responseStateContainer"
         android:layout_width="0dp"

@@ -31,12 +31,19 @@ import com.example.proyecto1_compi1_ps26.domain.entities.enums.ColorType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.OperatorType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.ValueType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.VariableType
+import com.example.proyecto1_compi1_ps26.domain.entities.questions.DropQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.questions.MultipleQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.questions.OpenQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.questions.SelectQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.questions.SpecialValue
 import java.net.URL
 import kotlin.math.pow
 
 class Interpreter {
 
     private val globalEnvironment = Environment()
+
+    val formOutput = mutableListOf<Map<String, Any?>>()
 
     fun run(ast: Program) {
         this.executeBlock(ast.statements, this.globalEnvironment)
@@ -155,6 +162,55 @@ class Interpreter {
                         "pero recibió ${node.arguments.size}."
             )
         }
+
+        val argVals = node.arguments.map { arg ->
+            (evaluate(arg, env) as? Double)
+                ?: throw Exception(
+                    "Error en la linea ${node.line}: Los argumentos de draw() deben ser de tipo number."
+                )
+        }
+
+        val resolved = resolveWildcards(specialValue, argVals)
+        addToForm(resolved)
+    }
+
+    private fun resolveWildcards(sv: SpecialValue, args: List<Double>): SpecialValue {
+        var idx = 0
+        fun next(): Double = if (idx < args.size) args[idx++] else
+            throw Exception("Faltan argumentos para draw().")
+
+        return when (sv) {
+            is OpenQValue -> sv.copy(
+                width = sv.width ?: next(),
+                height = sv.height ?: next()
+            )
+
+            is DropQValue -> sv.copy(
+                width = sv.width ?: next(),
+                height = sv.height ?: next()
+            )
+
+            is SelectQValue -> sv.copy(
+                width = sv.width ?: next(),
+                height = sv.height ?: next()
+            )
+
+            is MultipleQValue -> sv.copy(
+                width = sv.width ?: next(),
+                height = sv.height ?: next()
+            )
+        }
+    }
+
+    private fun addToForm(sv: SpecialValue) {
+        val entry: Map<String, Any?> = when (sv) {
+            is OpenQValue -> mapOf("type" to "OPEN_QUESTION", "data" to sv)
+            is DropQValue -> mapOf("type" to "DROP_QUESTION", "data" to sv)
+            is SelectQValue -> mapOf("type" to "SELECT_QUESTION", "data" to sv)
+            is MultipleQValue -> mapOf("type" to "MULTIPLE_QUESTION", "data" to sv)
+        }
+        formOutput.add(entry)
+        println("[FORM] Elemento agregado: ${entry["type"]}")
     }
 
     private fun executeIf(node: If, env: Environment) {
@@ -271,7 +327,7 @@ class Interpreter {
 
     private fun executeTextElement(node: Text, env: Environment) {
         val content = evaluate(node.content, env).toString()
-        //formOutput.add(mapOf("type" to "TEXT", "content" to content))
+        formOutput.add(mapOf("type" to "TEXT", "content" to content))
         println("[FORM] Texto agregado: \"$content\"")
     }
 
@@ -281,13 +337,15 @@ class Interpreter {
         val height = node.height?.let { toNumber(evaluate(it, env), node.line) }
         val styles = evalStyles(node.styles, env)
 
-        /*formOutput.add(mapOf(
-            "type"   to "OPEN_QUESTION",
-            "label"  to label,
-            "width"  to width,
-            "height" to height,
-            "styles" to styles
-        ))*/
+        formOutput.add(
+            mapOf(
+                "type" to "OPEN_QUESTION",
+                "label" to label,
+                "width" to width,
+                "height" to height,
+                "styles" to styles
+            )
+        )
         println("[FORM] OPEN_QUESTION: \"$label\"")
     }
 
@@ -322,7 +380,15 @@ class Interpreter {
             }
         }
         val styles = evalStyles(node.styles, env)
-        //formOutput.add(mapOf("type" to "DROP_QUESTION", "label" to label, "options" to options, "correct" to correct, "styles" to styles))
+        formOutput.add(
+            mapOf(
+                "type" to "DROP_QUESTION",
+                "label" to label,
+                "options" to options,
+                "correct" to correct,
+                "styles" to styles
+            )
+        )
         println("[FORM] DROP_QUESTION: \"$label\" (${options.size} opciones)")
     }
 
@@ -340,12 +406,6 @@ class Interpreter {
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.let { toNumber(evaluate(it, env), node.line).toInt() }
 
-        if (options.size > 5) {
-            println(
-                "[ADVERTENCIA] SELECT_QUESTION tiene más de 5 opciones (${options.size}). " +
-                        "El usuario deberá confirmar antes de agregar al formulario."
-            )
-        }
         correct?.let {
             if (it < 1 || it > options.size) {
                 throw Exception(
@@ -354,7 +414,15 @@ class Interpreter {
             }
         }
         val styles = evalStyles(node.styles, env)
-        //formOutput.add(mapOf("type" to "SELECT_QUESTION", "label" to label, "options" to options, "correct" to correct, "styles" to styles))
+        formOutput.add(
+            mapOf(
+                "type" to "SELECT_QUESTION",
+                "label" to label,
+                "options" to options,
+                "correct" to correct,
+                "styles" to styles
+            )
+        )
     }
 
     private fun executeMultipleQuestion(node: MultipleQuestion, env: Environment) {
@@ -362,9 +430,6 @@ class Interpreter {
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.map { toNumber(evaluate(it, env), node.line).toInt() }
 
-        if (options.size > 5) {
-            println("[ADVERTENCIA] MULTIPLE_QUESTION tiene más de 5 opciones (${options.size}).")
-        }
         correct?.forEach {
             if (it < 1 || it > options.size) {
                 throw Exception(
@@ -373,7 +438,15 @@ class Interpreter {
             }
         }
         val styles = evalStyles(node.styles, env)
-        //formOutput.add(mapOf("type" to "MULTIPLE_QUESTION", "label" to label, "options" to options, "correct" to correct, "styles" to styles))
+        formOutput.add(
+            mapOf(
+                "type" to "MULTIPLE_QUESTION",
+                "label" to label,
+                "options" to options,
+                "correct" to correct,
+                "styles" to styles
+            )
+        )
     }
 
     private fun evalBinary(node: BinaryExpression, env: Environment): Any {

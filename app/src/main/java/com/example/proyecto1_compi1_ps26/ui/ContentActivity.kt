@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -110,7 +111,7 @@ class ContentActivity : AppCompatActivity() {
         }
 
         this.btnSend.setOnClickListener {
-            Toast.makeText(this, "Formulario enviado exitosamente ✓", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Formulario enviado exitosamente", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -154,6 +155,15 @@ class ContentActivity : AppCompatActivity() {
         this.dynamicComponentsLayout.removeAllViews()
 
         // Aquí va el parser del .form
+        // Ejemplo: muestra cada línea del código como un TextView
+        code.lines().filter { it.isNotBlank() }.forEach { line ->
+            val textView = TextView(this).apply {
+                text = line
+                textSize = 14f
+                setPadding(0, 8, 0, 8)
+            }
+            this.dynamicComponentsLayout.addView(textView)
+        }
 
         Toast.makeText(this, "Componentes actualizados", Toast.LENGTH_SHORT).show()
     }
