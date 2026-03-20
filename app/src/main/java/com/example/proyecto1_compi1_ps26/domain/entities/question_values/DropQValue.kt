@@ -1,6 +1,6 @@
-package com.example.proyecto1_compi1_ps26.domain.entities.questions
+package com.example.proyecto1_compi1_ps26.domain.entities.question_values
 
-data class SelectQValue(
+data class DropQValue(
     val width: Double?,
     val height: Double?,
     val label: String,

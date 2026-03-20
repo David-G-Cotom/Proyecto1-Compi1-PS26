@@ -44,11 +44,11 @@ import com.example.proyecto1_compi1_ps26.domain.entities.enums.OperatorType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.OrientationType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.ValueType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.VariableType
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.DropQValue
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.MultipleQValue
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.OpenQValue
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.SelectQValue
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.SpecialValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.DropQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.MultipleQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.OpenQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.SelectQValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.SpecialValue
 import java.net.URL
 import kotlin.math.pow
 
@@ -134,8 +134,8 @@ class Interpreter {
 
         is BinaryExpression -> evalBinary(node, env)
         is UnaryExpression -> evalUnary(node, env)
-        is Hex -> node.value
-        is Rgb -> this.rgbToHex(
+        is Hex -> "#" + node.value
+        is Rgb -> "#" + this.rgbToHex(
             toInt(evaluate(node.r, env), node.line),
             toInt(evaluate(node.g, env), node.line),
             toInt(evaluate(node.b, env), node.line)
@@ -635,19 +635,18 @@ class Interpreter {
     private fun hslToHex(h: Double, s: Double, l: Double): String {
         val hsl = floatArrayOf(h.toFloat(), s.toFloat(), l.toFloat())
         val colorInt = ColorUtils.HSLToColor(hsl)
-        val hexColor = String.format("#%06X", 0xFFFFFF and colorInt)
-        return hexColor.removePrefix("#")
+        return String.format("#%06X", 0xFFFFFF and colorInt)
     }
 
     private fun namedColor(name: ColorType): String = when (name) {
-        ColorType.RED -> "FF0000"
-        ColorType.BLUE -> "0000FF"
-        ColorType.GREEN -> "008000"
-        ColorType.PURPLE -> "800080"
-        ColorType.SKY -> "87CEEB"
-        ColorType.YELLOW -> "FFFF00"
-        ColorType.BLACK -> "000000"
-        ColorType.WHITE -> "FFFFFF"
+        ColorType.RED -> "#FF0000"
+        ColorType.BLUE -> "#0000FF"
+        ColorType.GREEN -> "#008000"
+        ColorType.PURPLE -> "#800080"
+        ColorType.SKY -> "#87CEEB"
+        ColorType.YELLOW -> "#FFFF00"
+        ColorType.BLACK -> "#000000"
+        ColorType.WHITE -> "#FFFFFF"
     }
 
     private fun toInt(value: Any, line: Int): Int =

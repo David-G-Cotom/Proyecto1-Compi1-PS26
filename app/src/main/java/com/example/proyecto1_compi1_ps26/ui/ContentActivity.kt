@@ -25,6 +25,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ContentActivity : AppCompatActivity() {
 
+    companion object {
+        const val ERROR_REPORT = "error_report"
+    }
+
     private var currentState: ScreenState = ScreenState.EDIT
 
     private var currentFileUri: Uri? = null
@@ -83,6 +87,7 @@ class ContentActivity : AppCompatActivity() {
         this.btnApply = findViewById(R.id.btnApply)
         this.btnFinish = findViewById(R.id.btnFinish)
         this.btnReport = findViewById(R.id.btnReport)
+        this.btnReport.isEnabled = false
 
         this.responseStateContainer = findViewById(R.id.responseStateContainer)
         this.btnReturnEdit = findViewById(R.id.btnReturnEdit)
@@ -111,6 +116,12 @@ class ContentActivity : AppCompatActivity() {
 
         this.btnFinish.setOnClickListener {
             this.switchState(ScreenState.RESPONSE)
+        }
+
+        this.btnReport.setOnClickListener {
+            val intent = Intent(this, TableActivity::class.java)
+            intent.putExtra(ERROR_REPORT, this.errorReport)
+            startActivity(intent)
         }
 
         this.btnReturnEdit.setOnClickListener {

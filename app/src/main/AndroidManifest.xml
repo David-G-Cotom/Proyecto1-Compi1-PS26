@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Proyecto1_Compi1_PS26">
         <activity
+            android:name=".ui.TableActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.ContentActivity"
             android:exported="false" />
         <activity

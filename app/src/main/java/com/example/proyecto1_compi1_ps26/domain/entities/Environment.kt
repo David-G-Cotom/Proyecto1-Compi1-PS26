@@ -1,7 +1,7 @@
 package com.example.proyecto1_compi1_ps26.domain.entities
 
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.VariableType
-import com.example.proyecto1_compi1_ps26.domain.entities.questions.SpecialValue
+import com.example.proyecto1_compi1_ps26.domain.entities.question_values.SpecialValue
 
 class Environment(val parent: Environment? = null) {
 

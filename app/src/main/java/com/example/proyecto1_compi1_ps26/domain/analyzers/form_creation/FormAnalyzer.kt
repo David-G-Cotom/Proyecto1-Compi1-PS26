@@ -1,5 +1,6 @@
 package com.example.proyecto1_compi1_ps26.domain.analyzers.form_creation
 
+import com.example.proyecto1_compi1_ps26.domain.ast.ASTNode
 import com.example.proyecto1_compi1_ps26.domain.ast.Program
 import com.example.proyecto1_compi1_ps26.domain.entities.ErrorReport
 import com.example.proyecto1_compi1_ps26.domain.entities.Interpreter
@@ -16,7 +17,7 @@ class FormAnalyzer {
         val lexer = LexerForm(StringReader(text))
         val parser = ParserForm(lexer)
         try {
-            val ast = parser.parse().value as Program
+            val ast = Program(0, 0, parser.parse().value as ArrayList<ASTNode>)
             val interpreter = Interpreter()
             interpreter.run(ast)
             this.elements = interpreter.formOutput
