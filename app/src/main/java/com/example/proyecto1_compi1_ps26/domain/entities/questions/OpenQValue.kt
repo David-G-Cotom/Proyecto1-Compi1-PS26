@@ -4,7 +4,7 @@ data class OpenQValue(
     val width: Double?,
     val height: Double?,
     val label: String,
-    val styles: Map<String, Any>?,
+    val styles: Map<String, Any>,
     val wildcard: Int = 0
 ) : SpecialValue(wildcard) {
 }

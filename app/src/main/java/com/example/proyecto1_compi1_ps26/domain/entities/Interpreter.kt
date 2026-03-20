@@ -2,6 +2,9 @@ package com.example.proyecto1_compi1_ps26.domain.entities
 
 import androidx.core.graphics.ColorUtils
 import com.example.proyecto1_compi1_ps26.domain.ast.ASTNode
+import com.example.proyecto1_compi1_ps26.domain.ast.LiteralOptions
+import com.example.proyecto1_compi1_ps26.domain.ast.OptionsSource
+import com.example.proyecto1_compi1_ps26.domain.ast.PokemonOptions
 import com.example.proyecto1_compi1_ps26.domain.ast.Program
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.BinaryExpression
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Call
@@ -27,8 +30,18 @@ import com.example.proyecto1_compi1_ps26.domain.ast.statements.Table
 import com.example.proyecto1_compi1_ps26.domain.ast.statements.Text
 import com.example.proyecto1_compi1_ps26.domain.ast.statements.VarDecl
 import com.example.proyecto1_compi1_ps26.domain.ast.statements.While
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.DropQuestionElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.FormElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.MultipleQuestionElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.OpenQuestionElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.SectionElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.SelectQuestionElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.StyleAttributes
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.TableElement
+import com.example.proyecto1_compi1_ps26.domain.entities.elements.TextElement
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.ColorType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.OperatorType
+import com.example.proyecto1_compi1_ps26.domain.entities.enums.OrientationType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.ValueType
 import com.example.proyecto1_compi1_ps26.domain.entities.enums.VariableType
 import com.example.proyecto1_compi1_ps26.domain.entities.questions.DropQValue
@@ -43,35 +56,47 @@ class Interpreter {
 
     private val globalEnvironment = Environment()
 
-    val formOutput = mutableListOf<Map<String, Any?>>()
+    val formOutput = mutableListOf<FormElement>()
 
     fun run(ast: Program) {
         this.executeBlock(ast.statements, this.globalEnvironment)
     }
 
-    private fun executeBlock(statements: ArrayList<ASTNode>, env: Environment) {
+    private fun emit(element: FormElement, into: MutableList<FormElement>?) {
+        (into ?: this.formOutput).add(element)
+    }
+
+    private fun executeBlock(
+        statements: ArrayList<ASTNode>,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         for (statement in statements) {
-            this.execute(statement, env)
+            this.execute(statement, env, into)
         }
     }
 
-    private fun execute(statement: ASTNode, env: Environment) {
+    private fun execute(
+        statement: ASTNode,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         when (statement) {
             is VarDecl -> this.executeVarDecl(statement, env)
-            is Call -> this.executeCall(statement, env)
-            is If -> this.executeIf(statement, env)
-            is While -> this.executeWhile(statement, env)
-            is DoWhile -> this.executeDoWhile(statement, env)
-            is For -> this.executeFor(statement, env)
-            is ForRange -> this.executeForRange(statement, env)
-            is Section -> this.executeSection(statement, env)
-            is Table -> this.executeTable(statement, env)
-            is Text -> this.executeTextElement(statement, env)
-            is OpenQuestion -> this.executeOpenQuestion(statement, env)
-            is DropQuestion -> this.executeDropQuestion(statement, env)
-            is SelectQuestion -> this.executeSelectQuestion(statement, env)
-            is MultipleQuestion -> this.executeMultipleQuestion(statement, env)
-            is Program -> executeBlock(statement.statements, env)
+            is Call -> this.executeCall(statement, env, into)
+            is If -> this.executeIf(statement, env, into)
+            is While -> this.executeWhile(statement, env, into)
+            is DoWhile -> this.executeDoWhile(statement, env, into)
+            is For -> this.executeFor(statement, env, into)
+            is ForRange -> this.executeForRange(statement, env, into)
+            is Section -> this.executeSection(statement, env, into)
+            is Table -> this.executeTable(statement, env, into)
+            is Text -> this.executeTextElement(statement, env, into)
+            is OpenQuestion -> this.executeOpenQuestion(statement, env, into)
+            is DropQuestion -> this.executeDropQuestion(statement, env, into)
+            is SelectQuestion -> this.executeSelectQuestion(statement, env, into)
+            is MultipleQuestion -> this.executeMultipleQuestion(statement, env, into)
+            is Program -> executeBlock(statement.statements, env, into)
             else -> throw Exception(
                 "Instruccion no ejecutable: ${statement::class.simpleName} en linea ${statement.line}"
             )
@@ -148,7 +173,7 @@ class Interpreter {
         )
     }
 
-    private fun executeCall(node: Call, env: Environment) {
+    private fun executeCall(node: Call, env: Environment, into: MutableList<FormElement>? = null) {
         val special = env.getSymbol(node.varName)
         if (special.type != VariableType.SPECIAL) {
             throw Exception(
@@ -171,7 +196,7 @@ class Interpreter {
         }
 
         val resolved = resolveWildcards(specialValue, argVals)
-        addToForm(resolved)
+        addToForm(resolved, into)
     }
 
     private fun resolveWildcards(sv: SpecialValue, args: List<Double>): SpecialValue {
@@ -202,33 +227,61 @@ class Interpreter {
         }
     }
 
-    private fun addToForm(sv: SpecialValue) {
-        val entry: Map<String, Any?> = when (sv) {
-            is OpenQValue -> mapOf("type" to "OPEN_QUESTION", "data" to sv)
-            is DropQValue -> mapOf("type" to "DROP_QUESTION", "data" to sv)
-            is SelectQValue -> mapOf("type" to "SELECT_QUESTION", "data" to sv)
-            is MultipleQValue -> mapOf("type" to "MULTIPLE_QUESTION", "data" to sv)
+    private fun addToForm(sv: SpecialValue, into: MutableList<FormElement>?) {
+        val element: FormElement = when (sv) {
+            is OpenQValue -> OpenQuestionElement(
+                sv.width,
+                sv.height,
+                sv.label,
+                StyleAttributes.from(sv.styles)
+            )
+
+            is DropQValue -> DropQuestionElement(
+                sv.width,
+                sv.height,
+                sv.label,
+                sv.options,
+                sv.correct,
+                StyleAttributes.from(sv.styles)
+            )
+
+            is SelectQValue -> SelectQuestionElement(
+                sv.width,
+                sv.height,
+                sv.label,
+                sv.options,
+                sv.correct,
+                StyleAttributes.from(sv.styles)
+            )
+
+            is MultipleQValue -> MultipleQuestionElement(
+                sv.width,
+                sv.height,
+                sv.label,
+                sv.options,
+                sv.correct,
+                StyleAttributes.from(sv.styles)
+            )
         }
-        formOutput.add(entry)
-        println("[FORM] Elemento agregado: ${entry["type"]}")
+        emit(element, into)
     }
 
-    private fun executeIf(node: If, env: Environment) {
+    private fun executeIf(node: If, env: Environment, into: MutableList<FormElement>? = null) {
         if (this.isTrue(evaluate(node.condition, env), node.line)) {
-            executeBlock(node.thenStatement, env.createChild())
+            executeBlock(node.thenStatement, env.createChild(), into)
             return
         }
         if (node.elseIfStatement != null) {
             for (statement in node.elseIfStatement) {
                 if (this.isTrue(evaluate(statement.condition, env), node.line)) {
                     if (statement.body != null) {
-                        executeBlock(statement.body, env.createChild())
+                        executeBlock(statement.body, env.createChild(), into)
                     }
                     return
                 }
             }
         }
-        node.elseStatement?.let { executeBlock(it, env.createChild()) }
+        node.elseStatement?.let { executeBlock(it, env.createChild(), into) }
     }
 
     private fun isTrue(value: Any, line: Int): Boolean = when (value) {
@@ -239,19 +292,27 @@ class Interpreter {
         )
     }
 
-    private fun executeWhile(node: While, env: Environment) {
+    private fun executeWhile(
+        node: While,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         while (this.isTrue(evaluate(node.condition, env), node.line)) {
-            executeBlock(node.body, env.createChild())
+            executeBlock(node.body, env.createChild(), into)
         }
     }
 
-    private fun executeDoWhile(node: DoWhile, env: Environment) {
+    private fun executeDoWhile(
+        node: DoWhile,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         do {
-            executeBlock(node.body, env.createChild())
+            executeBlock(node.body, env.createChild(), into)
         } while (this.isTrue(evaluate(node.condition, env), node.line))
     }
 
-    private fun executeFor(node: For, env: Environment) {
+    private fun executeFor(node: For, env: Environment, into: MutableList<FormElement>? = null) {
         val loopEnv = env.createChild()
         execute(node.init, loopEnv)
         val controlVar: String = when (val init = node.init) {
@@ -274,12 +335,16 @@ class Interpreter {
             )
         }
         while (this.isTrue(evaluate(node.condition, loopEnv), node.line)) {
-            executeBlock(node.body, loopEnv.createChild())
+            executeBlock(node.body, loopEnv.createChild(), into)
             execute(node.update, loopEnv)
         }
     }
 
-    private fun executeForRange(node: ForRange, env: Environment) {
+    private fun executeForRange(
+        node: ForRange,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         val loopEnv = env.createChild()
         val from = toNumber(evaluate(node.start, env), node.line).toLong()
         val to = toNumber(evaluate(node.end, env), node.line).toLong()
@@ -302,7 +367,7 @@ class Interpreter {
 
         for (i in from..to) {
             loopEnv.assign(node.id, i.toDouble())
-            executeBlock(node.body, loopEnv.createChild())
+            executeBlock(node.body, loopEnv.createChild(), into)
         }
     }
 
@@ -315,38 +380,75 @@ class Interpreter {
         }
     }
 
-    private fun executeSection(node: Section, env: Environment) {
+    private fun executeSection(
+        node: Section,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
+        val children = mutableListOf<FormElement>()
         val sectionEnv = env.createChild()
-        node.elements?.forEach { execute(it, sectionEnv) }
-    }
-
-    private fun executeTable(node: Table, env: Environment) {
-        val tableEnv = env.createChild()
-        node.elements.forEach { execute(it, tableEnv) }
-    }
-
-    private fun executeTextElement(node: Text, env: Environment) {
-        val content = evaluate(node.content, env).toString()
-        formOutput.add(mapOf("type" to "TEXT", "content" to content))
-        println("[FORM] Texto agregado: \"$content\"")
-    }
-
-    private fun executeOpenQuestion(node: OpenQuestion, env: Environment) {
-        val label = evaluate(node.label, env).toString()
-        val width = node.width?.let { toNumber(evaluate(it, env), node.line) }
-        val height = node.height?.let { toNumber(evaluate(it, env), node.line) }
-        val styles = evalStyles(node.styles, env)
-
-        formOutput.add(
-            mapOf(
-                "type" to "OPEN_QUESTION",
-                "label" to label,
-                "width" to width,
-                "height" to height,
-                "styles" to styles
-            )
+        node.elements?.forEach { execute(it, sectionEnv, children) }
+        val element = SectionElement(
+            toNumber(evaluate(node.width, env), node.line),
+            toNumber(evaluate(node.height, env), node.line),
+            toNumber(evaluate(node.pointX, env), node.line),
+            toNumber(evaluate(node.pointY, env), node.line),
+            node.orientation ?: OrientationType.VERTICAL,
+            children,
+            StyleAttributes.from(evalStyles(node.styles, env))
         )
-        println("[FORM] OPEN_QUESTION: \"$label\"")
+        emit(element, into)
+    }
+
+    private fun executeTable(
+        node: Table,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
+        val tableEnv = env.createChild()
+        val rows = node.elements.map { rowNode ->
+            val rowChildren = mutableListOf<FormElement>()
+            execute(rowNode, tableEnv, rowChildren)
+            rowChildren.toList()
+        }
+
+        val element = TableElement(
+            toNumber(evaluate(node.width, env), node.line),
+            toNumber(evaluate(node.height, env), node.line),
+            toNumber(evaluate(node.pointX, env), node.line),
+            toNumber(evaluate(node.pointY, env), node.line),
+            rows,
+            StyleAttributes.from(evalStyles(node.styles, env))
+        )
+        emit(element, into)
+    }
+
+    private fun executeTextElement(
+        node: Text,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
+        val element = TextElement(
+            node.width?.let { toNumber(evaluate(it, env), node.line) },
+            node.height?.let { toNumber(evaluate(it, env), node.line) },
+            evaluate(node.content, env).toString(),
+            StyleAttributes.from(evalStyles(node.styles, env))
+        )
+        emit(element, into)
+    }
+
+    private fun executeOpenQuestion(
+        node: OpenQuestion,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
+        val element = OpenQuestionElement(
+            node.width?.let { toNumber(evaluate(it, env), node.line) },
+            node.height?.let { toNumber(evaluate(it, env), node.line) },
+            evaluate(node.label, env).toString(),
+            StyleAttributes.from(evalStyles(node.styles, env))
+        )
+        emit(element, into)
     }
 
     private fun evalStyles(node: Styles?, env: Environment): Map<String, Any> {
@@ -365,7 +467,11 @@ class Interpreter {
         }
     }
 
-    private fun executeDropQuestion(node: DropQuestion, env: Environment) {
+    private fun executeDropQuestion(
+        node: DropQuestion,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         val label = evaluate(node.label, env).toString()
         val width = node.width?.let { toNumber(evaluate(it, env), node.line) }
         val height = node.height?.let { toNumber(evaluate(it, env), node.line) }
@@ -379,17 +485,15 @@ class Interpreter {
                 )
             }
         }
-        val styles = evalStyles(node.styles, env)
-        formOutput.add(
-            mapOf(
-                "type" to "DROP_QUESTION",
-                "label" to label,
-                "options" to options,
-                "correct" to correct,
-                "styles" to styles
-            )
+        val element = DropQuestionElement(
+            node.width?.let { toNumber(evaluate(it, env), node.line) },
+            node.height?.let { toNumber(evaluate(it, env), node.line) },
+            label,
+            options,
+            correct,
+            StyleAttributes.from(evalStyles(node.styles, env))
         )
-        println("[FORM] DROP_QUESTION: \"$label\" (${options.size} opciones)")
+        emit(element, into)
     }
 
     private fun resolveOptions(src: OptionsSource, env: Environment): ArrayList<String> =
@@ -401,7 +505,7 @@ class Interpreter {
             }
         } as ArrayList<String>
 
-    private fun executeSelectQuestion(node: SelectQuestion, env: Environment) {
+    private fun executeSelectQuestion(node: SelectQuestion, env: Environment, into: MutableList<FormElement>? = null) {
         val options = resolveOptions(node.options, env)
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.let { toNumber(evaluate(it, env), node.line).toInt() }
@@ -413,19 +517,18 @@ class Interpreter {
                 )
             }
         }
-        val styles = evalStyles(node.styles, env)
-        formOutput.add(
-            mapOf(
-                "type" to "SELECT_QUESTION",
-                "label" to label,
-                "options" to options,
-                "correct" to correct,
-                "styles" to styles
-            )
+        val element = SelectQuestionElement(
+            node.width?.let  { toNumber(evaluate(it, env), node.line) },
+            node.height?.let { toNumber(evaluate(it, env), node.line) },
+            label,
+            options,
+            correct,
+            StyleAttributes.from(evalStyles(node.styles, env))
         )
+        emit(element, into)
     }
 
-    private fun executeMultipleQuestion(node: MultipleQuestion, env: Environment) {
+    private fun executeMultipleQuestion(node: MultipleQuestion, env: Environment, into: MutableList<FormElement>? = null) {
         val options = resolveOptions(node.options, env)
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.map { toNumber(evaluate(it, env), node.line).toInt() }
@@ -437,16 +540,15 @@ class Interpreter {
                 )
             }
         }
-        val styles = evalStyles(node.styles, env)
-        formOutput.add(
-            mapOf(
-                "type" to "MULTIPLE_QUESTION",
-                "label" to label,
-                "options" to options,
-                "correct" to correct,
-                "styles" to styles
-            )
+        val element = MultipleQuestionElement(
+            node.width?.let  { toNumber(evaluate(it, env), node.line) },
+            node.height?.let { toNumber(evaluate(it, env), node.line) },
+            label,
+            options,
+            correct,
+            StyleAttributes.from(evalStyles(node.styles, env))
         )
+        emit(element, into)
     }
 
     private fun evalBinary(node: BinaryExpression, env: Environment): Any {

@@ -9,7 +9,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +18,10 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.proyecto1_compi1_ps26.MainActivity
 import com.example.proyecto1_compi1_ps26.R
 import androidx.core.net.toUri
+import com.example.proyecto1_compi1_ps26.domain.analyzers.form_creation.FormAnalyzer
+import com.example.proyecto1_compi1_ps26.domain.entities.ErrorReport
+import com.example.proyecto1_compi1_ps26.domain.entities.FormRenderer
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ContentActivity : AppCompatActivity() {
 
@@ -31,10 +34,11 @@ class ContentActivity : AppCompatActivity() {
 
     private lateinit var editStateContainer: LinearLayout
     private lateinit var etFormCode: EditText
-    private lateinit var btnSave: Button
-    private lateinit var btnSaveAs: Button
-    private lateinit var btnApply: Button
-    private lateinit var btnFinish: Button
+    private lateinit var btnSave: FloatingActionButton
+    private lateinit var btnSaveAs: FloatingActionButton
+    private lateinit var btnApply: FloatingActionButton
+    private lateinit var btnFinish: FloatingActionButton
+    private lateinit var btnReport: FloatingActionButton
 
     private lateinit var responseStateContainer: LinearLayout
     private lateinit var btnReturnEdit: Button
@@ -51,6 +55,8 @@ class ContentActivity : AppCompatActivity() {
                 Toast.makeText(this, "Archivo guardado correctamente", Toast.LENGTH_SHORT).show()
             }
         }
+
+    var errorReport: ArrayList<ErrorReport> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +82,7 @@ class ContentActivity : AppCompatActivity() {
         this.btnSaveAs = findViewById(R.id.btnSaveAs)
         this.btnApply = findViewById(R.id.btnApply)
         this.btnFinish = findViewById(R.id.btnFinish)
+        this.btnReport = findViewById(R.id.btnReport)
 
         this.responseStateContainer = findViewById(R.id.responseStateContainer)
         this.btnReturnEdit = findViewById(R.id.btnReturnEdit)
@@ -153,19 +160,22 @@ class ContentActivity : AppCompatActivity() {
 
     private fun renderComponents(code: String) {
         this.dynamicComponentsLayout.removeAllViews()
-
-        // Aquí va el parser del .form
-        // Ejemplo: muestra cada línea del código como un TextView
-        code.lines().filter { it.isNotBlank() }.forEach { line ->
-            val textView = TextView(this).apply {
-                text = line
-                textSize = 14f
-                setPadding(0, 8, 0, 8)
-            }
-            this.dynamicComponentsLayout.addView(textView)
+        val analyzer = FormAnalyzer()
+        val result: String = analyzer.analyze(code)
+        if (analyzer.errors.isEmpty()) {
+            this.btnReport.isEnabled = false
+        } else {
+            Toast.makeText(
+                this,
+                "Se encontraron errores en el codigo. Revise el Reporte de Errores",
+                Toast.LENGTH_SHORT)
+                .show()
+            this.errorReport = analyzer.errors
+            this.btnReport.isEnabled = true
         }
-
-        Toast.makeText(this, "Componentes actualizados", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, result, Toast.LENGTH_SHORT).show()
+        val render = FormRenderer(this)
+        render.render(analyzer.elements, this.dynamicComponentsLayout)
     }
 
     private fun saveAsNewFile(content: String) {

@@ -6,7 +6,7 @@ data class SelectQValue(
     val label: String,
     val options: ArrayList<String>,
     val correct: Int?,
-    val styles: Map<String, Any>?,
+    val styles: Map<String, Any>,
     val wildcard: Int = 0
 ) : SpecialValue(wildcard) {
 }

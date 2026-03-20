@@ -1,7 +1,7 @@
 package com.example.proyecto1_compi1_ps26.domain.ast.statements
 
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Expression
-import com.example.proyecto1_compi1_ps26.domain.entities.OptionsSource
+import com.example.proyecto1_compi1_ps26.domain.ast.OptionsSource
 import com.example.proyecto1_compi1_ps26.domain.entities.Styles
 
 class SelectQuestion(

@@ -1,4 +1,4 @@
-package com.example.proyecto1_compi1_ps26.domain.entities
+package com.example.proyecto1_compi1_ps26.domain.ast
 
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Expression
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.PokemonFunction
