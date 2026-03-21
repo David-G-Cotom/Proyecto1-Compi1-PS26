@@ -33,7 +33,7 @@ class FormAnalyzer {
             e.message
             e.cause
             e.stackTrace
-            result = "Error Inesperado -> " + e.message
+            result = "Error -> " + e.message
         }
         return result
     }

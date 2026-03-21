@@ -143,7 +143,7 @@ non terminal DoWhile do;
 non terminal Statement for;
 non terminal VariableType tipo_dato;
 non terminal Expression asignacion, valor, tipo_valor;
-non terminal Expression operacion_matematica, concatenacion_string;
+non terminal Expression operacion_matematica;
 non terminal ArrayList<Expression> parametros_draw, lista_parametros;
 non terminal ColorExpression color;
 non terminal Rgb rgb;
@@ -215,11 +215,9 @@ tipo_dato ::= NUMBER {: RESULT = VariableType.NUMBER; :} |
 asignacion ::= IGUAL tipo_valor:tv {: RESULT = tv; :} |
                 /* empty */ {: RESULT = null; :};
 
-tipo_valor ::= valor:v {: RESULT = v; :} |
-                concatenacion_string:cs {: RESULT = cs; :};
+tipo_valor ::= valor:v {: RESULT = v; :};
 
 valor ::= operacion_matematica:om {: RESULT = om; :} |
-        TEXTO:t {: RESULT = new Literal(tleft, tright, t, ValueType.STRING); :} |
         pregunta:p {: RESULT = p; :};
 
 invocacion ::= ID:id PUNTO DRAW PARENTESIS_ABIERTO parametros_draw:pd {:
@@ -281,8 +279,8 @@ atributo ::= WIDTH DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMa
             ORIENTATION DOS_PUNTOS tipo_orientacion:to {: RESULT = new AbstractMap.SimpleEntry<>("orientation", (Object)to); :} |
             ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_elemento:le LLAVE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("elements", (Object)le); :} |
             STYLES CORCHETE_ABIERTO lista_estilo:le CORCHETE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("styles", (Object) new Styles(le)); :} |
-            CONTENT DOS_PUNTOS concatenacion_string:cs {: RESULT = new AbstractMap.SimpleEntry<>("content", (Object)cs); :} |
-            LABEL DOS_PUNTOS concatenacion_string:cs {: RESULT = new AbstractMap.SimpleEntry<>("label", (Object)cs); :} |
+            CONTENT DOS_PUNTOS tipo_valor:cs {: RESULT = new AbstractMap.SimpleEntry<>("content", (Object)cs); :} |
+            LABEL DOS_PUNTOS tipo_valor:cs {: RESULT = new AbstractMap.SimpleEntry<>("label", (Object)cs); :} |
             OPTIONS:o DOS_PUNTOS LLAVE_ABIERTO lista_opcion:lo LLAVE_CERRADO {:
                 RESULT = new AbstractMap.SimpleEntry<>("options", (Object) new LiteralOptions(lo));
             :} |
@@ -337,12 +335,12 @@ tipo_borde ::= LINE {: RESULT = BorderType.LINE; :} |
                 DOTTED {: RESULT = BorderType.DOTTED; :} |
                 DOUBLE {: RESULT = BorderType.DOUBLE; :};
 
-lista_opcion ::= lista_opcion:lo COMA concatenacion_string:cs {:
+lista_opcion ::= lista_opcion:lo COMA tipo_valor:cs {:
                     lo.add(cs);
                     RESULT = lo;
                 :} |
                 lista_opcion:lo COMA error {: RESULT = lo; :} |
-                concatenacion_string:cs {:
+                tipo_valor:cs {:
                     ArrayList<Expression> l = new ArrayList<>();
                     l.add(cs);
                     RESULT = l;
@@ -534,6 +532,7 @@ fn ::= PARENTESIS_ABIERTO operacion_matematica:om PARENTESIS_CERRADO {: RESULT =
         NUMERO_DECIMAL:nd {: RESULT = new Literal(ndleft, ndright, nd, ValueType.DECIMAL); :} |
         NUMERO_ENTERO:ne {: RESULT = new Literal(neleft, neright, ne, ValueType.WHOLE); :} |
         ID:id {: RESULT = new Identifier(idleft, idright, id); :} |
+        TEXTO:t {: RESULT = new Literal(tleft, tright, t, ValueType.STRING); :} |
         COMODIN:c {: RESULT = new Wildcard(cleft, cright); :} |
         RESTA:r fn:f {: RESULT = new UnaryExpression(rleft, rright, OperatorType.NEGATIVO, f); :};
 
@@ -545,9 +544,6 @@ operador_md ::= MULTIPLICACION {: RESULT = OperatorType.MULTIPLICACION; :} |
 
 operador_pm ::= POTENCIA {: RESULT = OperatorType.POTENCIA; :} |
                 MODULO {: RESULT = OperatorType.MODULO; :};
-
-concatenacion_string ::= concatenacion_string:l SUMA:s valor:r {: RESULT = new BinaryExpression(sleft, sright, l, r, OperatorType.SUMA); :} |
-                        valor:l SUMA:s valor:r {: RESULT = new BinaryExpression(sleft, sright, l, r, OperatorType.SUMA); :};
 
 operador_relacional ::= IGUALDAD {: RESULT = OperatorType.IGUALDAD; :} |
                         DIFERENTE {: RESULT = OperatorType.DIFERENTE; :} |

@@ -8,6 +8,7 @@ import com.example.proyecto1_compi1_ps26.domain.ast.PokemonOptions
 import com.example.proyecto1_compi1_ps26.domain.ast.Program
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.BinaryExpression
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Call
+import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Expression
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Hex
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Hsl
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Identifier
@@ -127,7 +128,11 @@ class Interpreter {
 
     fun evaluate(node: ASTNode, env: Environment): Any = when (node) {
         is Literal -> this.extracLiteral(node)
-        is Identifier -> env.getSymbol(node.name)
+        is Identifier -> env.getSymbol(node.name).value!!
+        is OpenQuestion -> evalOpenQuestion(node, env)
+        is DropQuestion -> evalDropQuestion(node, env)
+        is SelectQuestion -> evalSelectQuestion(node, env)
+        is MultipleQuestion -> evalMultipleQuestion(node, env)
         is Wildcard -> throw Exception(
             "El comodín '?' sólo puede usarse dentro de la definición de una variable special."
         )
@@ -159,6 +164,81 @@ class Interpreter {
             ValueType.STRING -> return literal.value as String
             else -> {}
         }
+    }
+
+    private fun evalOptionalNum(expr: Expression?, env: Environment): Double? {
+        if (expr == null || expr is Wildcard) return null
+        return toNumber(evaluate(expr, env), expr.line)
+    }
+
+    private fun countWildcards(vararg exprs: Expression?): Int =
+        exprs.count { it is Wildcard }
+
+    private fun evalOpenQuestion(node: OpenQuestion, env: Environment): OpenQValue {
+        return OpenQValue(
+            evalOptionalNum(node.width, env),
+            evalOptionalNum(node.height, env),
+            evaluate(node.label, env).toString(),
+            evalStyles(node.styles, env),
+            countWildcards(node.width, node.height)
+        )
+    }
+
+    private fun evalDropQuestion(node: DropQuestion, env: Environment): DropQValue {
+        val options = resolveOptions(node.options, env)
+        val correct = node.correct?.let { toNumber(evaluate(it, env), node.line).toInt() }
+        correct?.let {
+            if (it < 1 || it > options.size) throw Exception(
+                "Error en la linea ${node.line}: DROP_QUESTION: 'correct' ($it) fuera del rango (1..${options.size})."
+            )
+        }
+        return DropQValue(
+            evalOptionalNum(node.width, env),
+            evalOptionalNum(node.height, env),
+            evaluate(node.label, env).toString(),
+            options,
+            correct,
+            evalStyles(node.styles, env),
+            countWildcards(node.width, node.height)
+        )
+    }
+
+    private fun evalSelectQuestion(node: SelectQuestion, env: Environment): SelectQValue {
+        val options = resolveOptions(node.options, env)
+        val correct = node.correct?.let { toNumber(evaluate(it, env), node.line).toInt() }
+        correct?.let {
+            if (it < 1 || it > options.size) throw Exception(
+                "Error en la linea ${node.line}: SELECT_QUESTION: 'correct' ($it) fuera del rango (1..${options.size})."
+            )
+        }
+        return SelectQValue(
+            evalOptionalNum(node.width, env),
+            evalOptionalNum(node.height, env),
+            node.label?.let { evaluate(it, env).toString() } as String,
+            options,
+            correct,
+            evalStyles(node.styles, env),
+            countWildcards(node.width, node.height)
+        )
+    }
+
+    private fun evalMultipleQuestion(node: MultipleQuestion, env: Environment): MultipleQValue {
+        val options = resolveOptions(node.options, env)
+        val correct = node.correct?.map { toNumber(evaluate(it, env), node.line).toInt() }
+        correct?.forEach {
+            if (it < 1 || it > options.size) throw Exception(
+                "Error en la linea ${node.line}: MULTIPLE_QUESTION: índice correcto ($it) fuera del rango (1..${options.size})."
+            )
+        }
+        return MultipleQValue(
+            evalOptionalNum(node.width, env),
+            evalOptionalNum(node.height, env),
+            node.label?.let { evaluate(it, env).toString() } as String,
+            options,
+            correct as ArrayList<Int>?,
+            evalStyles(node.styles, env),
+            countWildcards(node.width, node.height)
+        )
     }
 
     private fun checkTypeCompatibility(expected: VariableType, actual: Any, line: Int) {
@@ -374,6 +454,13 @@ class Interpreter {
     private fun toNumber(value: Any, line: Int): Double {
         return when (value) {
             is Number -> value.toDouble()
+            is SymbolValue -> when (value.type) {
+                VariableType.NUMBER -> value.value as Double
+                else -> throw Exception(
+                    "Error en linea ${line}: Se esperaba number, se obtuvo ${value::class.simpleName}."
+                )
+            }
+
             else -> throw Exception(
                 "Error en linea ${line}: Se esperaba number, se obtuvo ${value::class.simpleName}."
             )
@@ -505,7 +592,11 @@ class Interpreter {
             }
         } as ArrayList<String>
 
-    private fun executeSelectQuestion(node: SelectQuestion, env: Environment, into: MutableList<FormElement>? = null) {
+    private fun executeSelectQuestion(
+        node: SelectQuestion,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         val options = resolveOptions(node.options, env)
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.let { toNumber(evaluate(it, env), node.line).toInt() }
@@ -518,7 +609,7 @@ class Interpreter {
             }
         }
         val element = SelectQuestionElement(
-            node.width?.let  { toNumber(evaluate(it, env), node.line) },
+            node.width?.let { toNumber(evaluate(it, env), node.line) },
             node.height?.let { toNumber(evaluate(it, env), node.line) },
             label,
             options,
@@ -528,7 +619,11 @@ class Interpreter {
         emit(element, into)
     }
 
-    private fun executeMultipleQuestion(node: MultipleQuestion, env: Environment, into: MutableList<FormElement>? = null) {
+    private fun executeMultipleQuestion(
+        node: MultipleQuestion,
+        env: Environment,
+        into: MutableList<FormElement>? = null
+    ) {
         val options = resolveOptions(node.options, env)
         val label = node.label?.let { evaluate(it, env).toString() }
         val correct = node.correct?.map { toNumber(evaluate(it, env), node.line).toInt() }
@@ -541,7 +636,7 @@ class Interpreter {
             }
         }
         val element = MultipleQuestionElement(
-            node.width?.let  { toNumber(evaluate(it, env), node.line) },
+            node.width?.let { toNumber(evaluate(it, env), node.line) },
             node.height?.let { toNumber(evaluate(it, env), node.line) },
             label,
             options,
@@ -569,9 +664,77 @@ class Interpreter {
         val right = evaluate(node.right, env)
 
         return when (node.operator) {
-            OperatorType.SUMA -> when {
-                left is Number && right is Number -> left.toDouble() + right.toDouble()
-                left is String || right is String -> "$left$right"
+            OperatorType.SUMA -> when (left) {
+                is Number -> when (right) {
+                    is Number -> left.toDouble() + right.toDouble()
+                    is String -> "$left$right"
+                    is SymbolValue -> when {
+                        right.type == VariableType.NUMBER -> left.toDouble() + right.value as Double
+                        right.type == VariableType.STRING -> left.toString() + right.value as String
+                        else -> throw Exception(
+                            "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                        )
+                    }
+
+                    else -> throw Exception(
+                        "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                    )
+                }
+
+                is String -> when (right) {
+                    is Number -> "$left$right"
+                    is String -> "$left$right"
+                    is SymbolValue -> when {
+                        right.type == VariableType.NUMBER -> left + right.value.toString()
+                        right.type == VariableType.STRING -> left + right.value as String
+                        else -> throw Exception(
+                            "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                        )
+                    }
+
+                    else -> throw Exception(
+                        "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                    )
+                }
+
+                is SymbolValue -> when {
+                    left.type == VariableType.NUMBER -> when (right) {
+                        is Number -> left.value as Double + right.toDouble()
+                        is String -> "$left$right"
+                        is SymbolValue -> when {
+                            right.type == VariableType.NUMBER -> left.value as Double + right.value as Double
+                            right.type == VariableType.STRING -> left.toString() + right.value as String
+                            else -> throw Exception(
+                                "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                            )
+                        }
+
+                        else -> throw Exception(
+                            "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                        )
+                    }
+
+                    left.type == VariableType.STRING -> when (right) {
+                        is Number -> "$left$right"
+                        is String -> "$left$right"
+                        is SymbolValue -> when {
+                            right.type == VariableType.NUMBER -> left.value as String + right.value.toString()
+                            right.type == VariableType.STRING -> left.value as String + right.value as String
+                            else -> throw Exception(
+                                "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                            )
+                        }
+
+                        else -> throw Exception(
+                            "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                        )
+                    }
+
+                    else -> throw Exception(
+                        "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
+                    )
+                }
+
                 else -> throw Exception(
                     "Error en la linea ${node.line}: Operación '+' no soportada entre ${left::class.simpleName} y ${right::class.simpleName}."
                 )

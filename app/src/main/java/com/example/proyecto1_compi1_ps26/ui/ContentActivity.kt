@@ -12,6 +12,7 @@ import android.widget.ScrollView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -179,12 +180,16 @@ class ContentActivity : AppCompatActivity() {
             Toast.makeText(
                 this,
                 "Se encontraron errores en el codigo. Revise el Reporte de Errores",
-                Toast.LENGTH_SHORT)
+                Toast.LENGTH_LONG)
                 .show()
             this.errorReport = analyzer.errors
             this.btnReport.isEnabled = true
         }
-        Toast.makeText(this, result, Toast.LENGTH_SHORT).show()
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Mensaje!!!")
+        builder.setMessage(result)
+        builder.setPositiveButton("Aceptar") { dialog, which -> }
+        builder.show()
         val render = FormRenderer(this)
         render.render(analyzer.elements, this.dynamicComponentsLayout)
     }
