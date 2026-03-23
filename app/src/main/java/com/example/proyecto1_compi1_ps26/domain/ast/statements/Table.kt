@@ -1,5 +1,6 @@
 package com.example.proyecto1_compi1_ps26.domain.ast.statements
 
+import com.example.proyecto1_compi1_ps26.domain.ast.ASTNode
 import com.example.proyecto1_compi1_ps26.domain.ast.expressions.Expression
 import com.example.proyecto1_compi1_ps26.domain.entities.Styles
 
@@ -10,7 +11,7 @@ class Table(
     val height: Expression,
     val pointX: Expression,
     val pointY: Expression,
-    val elements: ArrayList<Statement>,
+    val elements: ArrayList<ArrayList<ASTNode>>,
     val styles: Styles?
 ) : Statement(line, column) {
 }

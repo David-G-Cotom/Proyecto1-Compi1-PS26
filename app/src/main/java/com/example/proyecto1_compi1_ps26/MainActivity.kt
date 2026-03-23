@@ -29,9 +29,9 @@ class MainActivity : AppCompatActivity() {
                 val uri = result.data?.data ?: return@registerForActivityResult
                 val content = this.readFileContent(uri)
                 this.navigateToContent(
-                    mode = RESPONSE_MODE,
-                    content = content,
-                    fileUri = uri.toString()
+                    RESPONSE_MODE,
+                    content,
+                    uri.toString()
                 )
             }
         }
@@ -42,9 +42,9 @@ class MainActivity : AppCompatActivity() {
                 val uri = result.data?.data ?: return@registerForActivityResult
                 val content = this.readFileContent(uri)
                 this.navigateToContent(
-                    mode = EDIT_MODE,
-                    content = content,
-                    fileUri = uri.toString()
+                    EDIT_MODE,
+                    content,
+                    uri.toString()
                 )
             }
         }

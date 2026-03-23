@@ -92,11 +92,11 @@ parser code {:
     // Support Methods
     private If buildIf(int line, int column, Expression cond, ArrayList<ASTNode> body, Object fin) {
         if (fin == null) {  // If
-            return new If(line, column, cond, body, null, null);
+            return new If(line, column, cond, body, new ArrayList<>(), null);
         }
 
         if (fin instanceof ArrayList) { // If else
-            return new If(line, column, cond, body, null, (ArrayList<ASTNode>) fin);
+            return new If(line, column, cond, body, new ArrayList<>(), (ArrayList<ASTNode>) fin);
         }
         // If else If else ...
         If nested = (If) fin;
@@ -164,6 +164,10 @@ non terminal PokemonFunction pokemon_func;
 non terminal Object asignacion_correcto, fin_if, continuar_else, condicion_for;
 non terminal Expression operacion_lra, operacion_and, operacion_not, operacion_relacional, tn, g, fn;
 non terminal OperatorType operador_sr, operador_md, operador_pm, operador_relacional;
+non terminal ArrayList<ArrayList<ASTNode>> lista_filas;
+non terminal ArrayList<ASTNode> fila;
+non terminal ArrayList<ASTNode> lista_celdas;
+non terminal ASTNode celda;
 
 /***************************************** PRECEDENCES *****************************************/
 precedence left OR;
@@ -274,10 +278,11 @@ lista_atributo ::= lista_atributo:la COMA atributo:a {:
 
 atributo ::= WIDTH DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("width", (Object)om); :} |
             HEIGHT DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("height", (Object)om); :} |
-            POINT_X DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("pintX", (Object)om); :} |
+            POINT_X DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("pointX", (Object)om); :} |
             POINT_Y DOS_PUNTOS operacion_matematica:om {: RESULT = new AbstractMap.SimpleEntry<>("pointY", (Object)om); :} |
             ORIENTATION DOS_PUNTOS tipo_orientacion:to {: RESULT = new AbstractMap.SimpleEntry<>("orientation", (Object)to); :} |
             ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_elemento:le LLAVE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("elements", (Object)le); :} |
+            ELEMENTS DOS_PUNTOS LLAVE_ABIERTO lista_filas:lf LLAVE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("rows", (Object)lf); :} |
             STYLES CORCHETE_ABIERTO lista_estilo:le CORCHETE_CERRADO {: RESULT = new AbstractMap.SimpleEntry<>("styles", (Object) new Styles(le)); :} |
             CONTENT DOS_PUNTOS tipo_valor:cs {: RESULT = new AbstractMap.SimpleEntry<>("content", (Object)cs); :} |
             LABEL DOS_PUNTOS tipo_valor:cs {: RESULT = new AbstractMap.SimpleEntry<>("label", (Object)cs); :} |
@@ -306,6 +311,33 @@ elemento ::= seccion:s {: RESULT = s; :} |
             pregunta:p {: RESULT = p; :} |
             tabla:t {: RESULT = t; :} |
             texto:t {: RESULT = t; :};
+
+lista_filas ::= lista_filas:lf COMA fila:f {:
+                    lf.add( f);
+                    RESULT = lf;
+                :} |
+                lista_filas:lf COMA error {: RESULT = lf; :} |
+                fila:f {:
+                    ArrayList<ArrayList<ASTNode>> lista = new ArrayList<>();
+                    lista.add(f);
+                    RESULT = lista;
+                :};
+
+fila ::= CORCHETE_ABIERTO lista_celdas:lc CORCHETE_CERRADO {: RESULT = lc; :};
+
+lista_celdas ::= lista_celdas:lc COMA celda:c {:
+                    lc.add(c);
+                    RESULT = lc;
+                :} |
+                lista_celdas:lc COMA error {: RESULT = lc; :} |
+                celda:c {:
+                    ArrayList<ASTNode> lista = new ArrayList<>();
+                    lista.add(c);
+                    RESULT = lista;
+                :} |
+                error {: RESULT = new ArrayList<ASTNode>(); :};
+
+celda ::= LLAVE_ABIERTO elemento:e LLAVE_CERRADO {: RESULT = e; :};
 
 lista_estilo ::= lista_estilo:le COMA estilo:e {:
                     le.put(e.getKey(), e.getValue());
@@ -375,14 +407,14 @@ seccion ::= SECTION:s CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
                     (Expression) la.get("pointX"),
                     (Expression) la.get("pointY"),
                     (OrientationType) la.get("orientation"),
-                    (ArrayList<Statement>) la.get("elements"),
+                    (ArrayList<ASTNode>) la.get("elements"),
                     (Styles) la.get("styles")
                 );
             :};
 
 tabla ::= TABLE:t CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
-                ArrayList<Statement> elems = (ArrayList<Statement>) la.get("elements");
-                if (elems == null) elems = new ArrayList<>();
+                ArrayList<ArrayList<ASTNode>> rows = (ArrayList<ArrayList<ASTNode>>) la.get("rows");
+                if (rows == null) rows = new ArrayList<>();
                 RESULT = new Table(
                     tleft,
                     tright,
@@ -390,7 +422,7 @@ tabla ::= TABLE:t CORCHETE_ABIERTO lista_atributo:la CORCHETE_CERRADO {:
                     (Expression) la.get("height"),
                     (Expression) la.get("pointX"),
                     (Expression) la.get("pointY"),
-                    elems,
+                    rows,
                     (Styles) la.get("styles")
                 );
             :};

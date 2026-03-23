@@ -493,10 +493,13 @@ class Interpreter {
         into: MutableList<FormElement>? = null
     ) {
         val tableEnv = env.createChild()
-        val rows = node.elements.map { rowNode ->
-            val rowChildren = mutableListOf<FormElement>()
-            execute(rowNode, tableEnv, rowChildren)
-            rowChildren.toList()
+        val rows: List<List<FormElement>> = node.elements.map { rowNodes ->
+            rowNodes.mapNotNull { cellNode ->
+                val cellChildren = mutableListOf<FormElement>()
+                execute(cellNode, tableEnv, cellChildren)
+                // Cada { elemento } produce un único FormElement en cellChildren.
+                cellChildren.firstOrNull()
+            }
         }
 
         val element = TableElement(
@@ -788,9 +791,12 @@ class Interpreter {
     }
 
     private fun rgbToHex(r: Int, g: Int, b: Int): String {
-        val redHex = Integer.toHexString(r)
-        val greenHex = Integer.toHexString(g)
-        val blueHex = Integer.toHexString(b)
+        var redHex = Integer.toHexString(r)
+        var greenHex = Integer.toHexString(g)
+        var blueHex = Integer.toHexString(b)
+        if (redHex.length == 1) redHex = "0$redHex"
+        if (greenHex.length == 1) greenHex = "0$greenHex"
+        if (blueHex.length == 1) blueHex = "0$blueHex"
 
         return redHex + greenHex + blueHex
     }
