@@ -12,12 +12,11 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="8dp"
-        app:layout_constraintBottom_toTopOf="@id/editStateContainer"
+        app:layout_constraintBottom_toTopOf="@id/sharedInputContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Contenedor dinámico: los componentes (.form) se agregan aquí por código -->
         <LinearLayout
             android:id="@+id/dynamicComponentsLayout"
             android:layout_width="match_parent"
@@ -30,19 +29,19 @@
     </ScrollView>
 
     <LinearLayout
-        android:id="@+id/editStateContainer"
+        android:id="@+id/sharedInputContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <EditText
-            android:id="@+id/etFormCode"
+            android:id="@+id/etCode"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
+            android:layout_height="200dp"
             android:gravity="top|start"
             android:hint="Escribe o pega aqui el codigo .form..."
             android:inputType="textMultiLine"
@@ -51,8 +50,21 @@
             android:padding="8dp"
             android:scrollbars="vertical" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent">
+
         <LinearLayout
+            android:id="@+id/editStateContainer"
             android:layout_width="match_parent"
+            android:visibility="visible"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal">
@@ -74,7 +86,7 @@
                 android:src="@drawable/ic_assignment_add_24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnApply"
+                android:id="@+id/btnApplyEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
@@ -90,12 +102,39 @@
                 android:src="@drawable/ic_arrow_forward_ios_24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnReport"
+                android:id="@+id/btnReportEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:contentDescription="Boton de Reporte"
                 android:src="@drawable/ic_error_24" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/savedStateContainer"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnApplySaved"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="Analizar" />
+
+            <Button
+                android:id="@+id/btnReportSaved"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="Reporte Errores" />
 
         </LinearLayout>
     </LinearLayout>

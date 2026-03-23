@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
         const val EXTRA_MODE = "mode"
         const val RESPONSE_MODE = "response"
         const val EDIT_MODE = "edit"
+        const val SAVED_MODE = "saved"
         const val EXTRA_CONTENT = "content"
         const val EXTRA_FILE_URI = "file_uri"
     }
@@ -49,6 +50,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val openSavedFileLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                navigateToContent(
+                    SAVED_MODE,
+                    readFileContent(uri),
+                    uri.toString()
+                )
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -69,7 +82,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnOpenSaveFile.setOnClickListener {
-            Toast.makeText(this, "Funcionalidad pendiente por definir", Toast.LENGTH_SHORT).show()
+            this.openFilePicker(this.openSavedFileLauncher)
         }
 
         btnOpenCode.setOnClickListener {
@@ -77,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnCreateForm.setOnClickListener {
-            this.navigateToContent(mode = EDIT_MODE)
+            this.navigateToContent(EDIT_MODE)
         }
     }
 

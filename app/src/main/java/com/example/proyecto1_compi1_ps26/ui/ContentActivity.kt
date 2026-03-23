@@ -36,18 +36,23 @@ class ContentActivity : AppCompatActivity() {
 
     private lateinit var scrollComponents: ScrollView
     private lateinit var dynamicComponentsLayout: LinearLayout
+    private lateinit var sharedInputContainer: LinearLayout
+    private lateinit var etCode: EditText
 
     private lateinit var editStateContainer: LinearLayout
-    private lateinit var etFormCode: EditText
     private lateinit var btnSave: FloatingActionButton
     private lateinit var btnSaveAs: FloatingActionButton
-    private lateinit var btnApply: FloatingActionButton
+    private lateinit var btnApplyEdit: FloatingActionButton
     private lateinit var btnFinish: FloatingActionButton
-    private lateinit var btnReport: FloatingActionButton
+    private lateinit var btnReportEdit: FloatingActionButton
 
     private lateinit var responseStateContainer: LinearLayout
     private lateinit var btnReturnEdit: Button
     private lateinit var btnSend: Button
+
+    private lateinit var savedStateContainer: LinearLayout
+    private lateinit var btnApplySaved: Button
+    private lateinit var btnReportSaved: Button
 
     private lateinit var pendingContentToSave: String
 
@@ -75,29 +80,36 @@ class ContentActivity : AppCompatActivity() {
 
         this.initComponents()
         this.setListeners()
+        this.applyInitialState()
     }
 
     fun initComponents() {
         this.scrollComponents = findViewById(R.id.scrollComponents)
         this.dynamicComponentsLayout = findViewById(R.id.dynamicComponentsLayout)
+        this.sharedInputContainer    = findViewById(R.id.sharedInputContainer)
+        this.etCode              = findViewById(R.id.etCode)
 
         this.editStateContainer = findViewById(R.id.editStateContainer)
-        this.etFormCode = findViewById(R.id.etFormCode)
         this.btnSave = findViewById(R.id.btnSave)
         this.btnSaveAs = findViewById(R.id.btnSaveAs)
-        this.btnApply = findViewById(R.id.btnApply)
+        this.btnApplyEdit = findViewById(R.id.btnApplyEdit)
         this.btnFinish = findViewById(R.id.btnFinish)
-        this.btnReport = findViewById(R.id.btnReport)
-        this.btnReport.isEnabled = false
+        this.btnReportEdit = findViewById(R.id.btnReportEdit)
+        this.btnReportEdit.isEnabled = false
 
         this.responseStateContainer = findViewById(R.id.responseStateContainer)
         this.btnReturnEdit = findViewById(R.id.btnReturnEdit)
         this.btnSend = findViewById(R.id.btnSend)
+
+        this.savedStateContainer     = findViewById(R.id.savedStateContainer)
+        this.btnApplySaved           = findViewById(R.id.btnApplySaved)
+        this.btnReportSaved          = findViewById(R.id.btnReportSaved)
+        this.btnReportSaved.isEnabled = false
     }
 
     fun setListeners() {
         this.btnSave.setOnClickListener {
-            val content = this.etFormCode.text.toString()
+            val content = this.etCode.text.toString()
             if (this.currentFileUri != null) {
                 this.writeFileContent(this.currentFileUri!!, content)
                 Toast.makeText(this, "Archivo guardado", Toast.LENGTH_SHORT).show()
@@ -107,11 +119,11 @@ class ContentActivity : AppCompatActivity() {
         }
 
         this.btnSaveAs.setOnClickListener {
-            this.saveAsNewFile(this.etFormCode.text.toString())
+            this.saveAsNewFile(this.etCode.text.toString())
         }
 
-        this.btnApply.setOnClickListener {
-            val code = this.etFormCode.text.toString()
+        this.btnApplyEdit.setOnClickListener {
+            val code = this.etCode.text.toString()
             this.renderComponents(code)
         }
 
@@ -119,7 +131,7 @@ class ContentActivity : AppCompatActivity() {
             this.switchState(ScreenState.RESPONSE)
         }
 
-        this.btnReport.setOnClickListener {
+        this.btnReportEdit.setOnClickListener {
             val intent = Intent(this, TableActivity::class.java)
             intent.putExtra(ERROR_REPORT, this.errorReport)
             startActivity(intent)
@@ -132,6 +144,16 @@ class ContentActivity : AppCompatActivity() {
         this.btnSend.setOnClickListener {
             Toast.makeText(this, "Formulario enviado exitosamente", Toast.LENGTH_LONG).show()
         }
+
+        this.btnApplySaved.setOnClickListener {
+            // HACER EL ANALISIS DEL CODIGO .pkm
+        }
+
+        this.btnReportSaved.setOnClickListener {
+            val intent = Intent(this, TableActivity::class.java)
+            intent.putExtra(ERROR_REPORT, this.errorReport)
+            startActivity(intent)
+        }
     }
 
     private fun applyInitialState() {
@@ -143,7 +165,7 @@ class ContentActivity : AppCompatActivity() {
             this.currentFileUri = fileUri.toUri()
         }
 
-        this.etFormCode.setText(content)
+        this.etCode.setText(content)
 
         if (content.isNotEmpty()) {
             this.renderComponents(content)
@@ -151,21 +173,29 @@ class ContentActivity : AppCompatActivity() {
 
         when (mode) {
             MainActivity.RESPONSE_MODE -> this.switchState(ScreenState.RESPONSE)
+            MainActivity.SAVED_MODE  -> this.switchState(ScreenState.SAVED)
             else -> this.switchState(ScreenState.EDIT)
         }
     }
 
     private fun switchState(newState: ScreenState) {
         this.currentState = newState
+        this.sharedInputContainer.visibility   = View.GONE
+        this.editStateContainer.visibility     = View.GONE
+        this.responseStateContainer.visibility = View.GONE
+        this.savedStateContainer.visibility    = View.GONE
         when (newState) {
             ScreenState.EDIT -> {
-                this.editStateContainer.visibility = View.VISIBLE
-                this.responseStateContainer.visibility = View.GONE
+                this.sharedInputContainer.visibility = View.VISIBLE
+                this.editStateContainer.visibility   = View.VISIBLE
             }
 
             ScreenState.RESPONSE -> {
-                this.editStateContainer.visibility = View.GONE
                 this.responseStateContainer.visibility = View.VISIBLE
+            }
+            ScreenState.SAVED -> {
+                this.sharedInputContainer.visibility = View.VISIBLE
+                this.savedStateContainer.visibility  = View.VISIBLE
             }
         }
     }
@@ -175,7 +205,7 @@ class ContentActivity : AppCompatActivity() {
         val analyzer = FormAnalyzer()
         val result: String = analyzer.analyze(code)
         if (analyzer.errors.isEmpty()) {
-            this.btnReport.isEnabled = false
+            this.btnReportEdit.isEnabled = false
         } else {
             Toast.makeText(
                 this,
@@ -183,7 +213,7 @@ class ContentActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG)
                 .show()
             this.errorReport = analyzer.errors
-            this.btnReport.isEnabled = true
+            this.btnReportEdit.isEnabled = true
         }
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Mensaje!!!")
