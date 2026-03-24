@@ -86,8 +86,8 @@ class ContentActivity : AppCompatActivity() {
     fun initComponents() {
         this.scrollComponents = findViewById(R.id.scrollComponents)
         this.dynamicComponentsLayout = findViewById(R.id.dynamicComponentsLayout)
-        this.sharedInputContainer    = findViewById(R.id.sharedInputContainer)
-        this.etCode              = findViewById(R.id.etCode)
+        this.sharedInputContainer = findViewById(R.id.sharedInputContainer)
+        this.etCode = findViewById(R.id.etCode)
 
         this.editStateContainer = findViewById(R.id.editStateContainer)
         this.btnSave = findViewById(R.id.btnSave)
@@ -101,9 +101,9 @@ class ContentActivity : AppCompatActivity() {
         this.btnReturnEdit = findViewById(R.id.btnReturnEdit)
         this.btnSend = findViewById(R.id.btnSend)
 
-        this.savedStateContainer     = findViewById(R.id.savedStateContainer)
-        this.btnApplySaved           = findViewById(R.id.btnApplySaved)
-        this.btnReportSaved          = findViewById(R.id.btnReportSaved)
+        this.savedStateContainer = findViewById(R.id.savedStateContainer)
+        this.btnApplySaved = findViewById(R.id.btnApplySaved)
+        this.btnReportSaved = findViewById(R.id.btnReportSaved)
         this.btnReportSaved.isEnabled = false
     }
 
@@ -173,29 +173,30 @@ class ContentActivity : AppCompatActivity() {
 
         when (mode) {
             MainActivity.RESPONSE_MODE -> this.switchState(ScreenState.RESPONSE)
-            MainActivity.SAVED_MODE  -> this.switchState(ScreenState.SAVED)
+            MainActivity.SAVED_MODE -> this.switchState(ScreenState.SAVED)
             else -> this.switchState(ScreenState.EDIT)
         }
     }
 
     private fun switchState(newState: ScreenState) {
         this.currentState = newState
-        this.sharedInputContainer.visibility   = View.GONE
-        this.editStateContainer.visibility     = View.GONE
+        this.sharedInputContainer.visibility = View.GONE
+        this.editStateContainer.visibility = View.GONE
         this.responseStateContainer.visibility = View.GONE
-        this.savedStateContainer.visibility    = View.GONE
+        this.savedStateContainer.visibility = View.GONE
         when (newState) {
             ScreenState.EDIT -> {
                 this.sharedInputContainer.visibility = View.VISIBLE
-                this.editStateContainer.visibility   = View.VISIBLE
+                this.editStateContainer.visibility = View.VISIBLE
             }
 
             ScreenState.RESPONSE -> {
                 this.responseStateContainer.visibility = View.VISIBLE
             }
+
             ScreenState.SAVED -> {
                 this.sharedInputContainer.visibility = View.VISIBLE
-                this.savedStateContainer.visibility  = View.VISIBLE
+                this.savedStateContainer.visibility = View.VISIBLE
             }
         }
     }
@@ -210,7 +211,8 @@ class ContentActivity : AppCompatActivity() {
             Toast.makeText(
                 this,
                 "Se encontraron errores en el codigo. Revise el Reporte de Errores",
-                Toast.LENGTH_LONG)
+                Toast.LENGTH_LONG
+            )
                 .show()
             this.errorReport = analyzer.errors
             this.btnReportEdit.isEnabled = true
@@ -221,7 +223,7 @@ class ContentActivity : AppCompatActivity() {
         builder.setPositiveButton("Aceptar") { dialog, which -> }
         builder.show()
         val render = FormRenderer(this)
-        render.render(analyzer.elements, this.dynamicComponentsLayout)
+        render.render(analyzer.interpreter.formOutput, this.dynamicComponentsLayout)
     }
 
     private fun saveAsNewFile(content: String) {

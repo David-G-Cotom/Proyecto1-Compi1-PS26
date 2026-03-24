@@ -10,7 +10,7 @@ import java.io.StringReader
 class FormAnalyzer {
 
     var errors: ArrayList<ErrorReport> = ArrayList()
-    var elements = mutableListOf<FormElement>()
+    lateinit var interpreter: Interpreter
 
     fun analyze(text: String): String {
         var result: String
@@ -18,9 +18,8 @@ class FormAnalyzer {
         val parser = ParserForm(lexer)
         try {
             val ast = Program(0, 0, parser.parse().value as ArrayList<ASTNode>)
-            val interpreter = Interpreter()
-            interpreter.run(ast)
-            this.elements = interpreter.formOutput
+            this.interpreter = Interpreter()
+            this.interpreter.run(ast)
             for (error in lexer.lexicalErrors) {
                 this.errors.add(error)
             }

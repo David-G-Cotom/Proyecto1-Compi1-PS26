@@ -7,4 +7,8 @@ class BorderAttributes(
     val type: BorderType,
     val color: String
 ) {
+
+    fun renderBorder(): String =
+        "<border,$width,${type.name},color=${color}/>"
+
 }

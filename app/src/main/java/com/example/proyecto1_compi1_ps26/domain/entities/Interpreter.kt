@@ -59,11 +59,24 @@ class Interpreter {
 
     val formOutput = mutableListOf<FormElement>()
 
+    var sectionCount: Int = 0
+    var openCount: Int = 0
+    var dropCount: Int = 0
+    var selectCount: Int = 0
+    var multipleCount: Int = 0
+
     fun run(ast: Program) {
         this.executeBlock(ast.statements, this.globalEnvironment)
     }
 
     private fun emit(element: FormElement, into: MutableList<FormElement>?) {
+        when (element) {
+            is SectionElement -> this.sectionCount++
+            is OpenQuestionElement -> this.openCount++
+            is DropQuestionElement -> this.dropCount++
+            is SelectQuestionElement -> this.selectCount++
+            is MultipleQuestionElement -> this.multipleCount++
+        }
         (into ?: this.formOutput).add(element)
     }
 
@@ -159,10 +172,9 @@ class Interpreter {
 
     private fun extracLiteral(literal: Literal): Any {
         return when (literal.type) {
-            ValueType.DECIMAL -> return literal.value as Double
-            ValueType.WHOLE -> return literal.value as Int
-            ValueType.STRING -> return literal.value as String
-            else -> {}
+            ValueType.DECIMAL -> literal.value as Double
+            ValueType.WHOLE -> literal.value as Int
+            ValueType.STRING -> literal.value as String
         }
     }
 
