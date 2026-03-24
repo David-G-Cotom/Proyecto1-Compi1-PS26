@@ -73,7 +73,7 @@
                 android:id="@+id/btnSave"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:contentDescription="Boton de Guardado"
                 android:src="@drawable/ic_assignment_24" />
 
@@ -81,7 +81,7 @@
                 android:id="@+id/btnSaveAs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:contentDescription="Boton de Guardado Como"
                 android:src="@drawable/ic_assignment_add_24" />
 
@@ -89,7 +89,7 @@
                 android:id="@+id/btnApplyEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:contentDescription="Boton de Aplicar"
                 android:src="@drawable/ic_check_24" />
 
@@ -97,7 +97,7 @@
                 android:id="@+id/btnFinish"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:contentDescription="Boton de Finalizar"
                 android:src="@drawable/ic_arrow_forward_ios_24" />
 
@@ -105,9 +105,17 @@
                 android:id="@+id/btnReportEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:contentDescription="Boton de Reporte"
                 android:src="@drawable/ic_error_24" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnExport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:contentDescription="Boton de Exportar"
+                android:src="@drawable/ic_file_export_24" />
 
         </LinearLayout>
 

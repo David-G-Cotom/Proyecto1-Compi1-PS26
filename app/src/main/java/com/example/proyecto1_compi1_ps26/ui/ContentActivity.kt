@@ -22,6 +22,8 @@ import androidx.core.net.toUri
 import com.example.proyecto1_compi1_ps26.domain.analyzers.form_creation.FormAnalyzer
 import com.example.proyecto1_compi1_ps26.domain.entities.ErrorReport
 import com.example.proyecto1_compi1_ps26.domain.entities.FormRenderer
+import com.example.proyecto1_compi1_ps26.domain.translation.PkmDocument
+import com.example.proyecto1_compi1_ps26.domain.translation.PkmTranslator
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class ContentActivity : AppCompatActivity() {
@@ -34,6 +36,9 @@ class ContentActivity : AppCompatActivity() {
 
     private var currentFileUri: Uri? = null
 
+    private var pendingExportAuthor: String = ""
+    private var pendingExportDescription: String = ""
+
     private lateinit var scrollComponents: ScrollView
     private lateinit var dynamicComponentsLayout: LinearLayout
     private lateinit var sharedInputContainer: LinearLayout
@@ -45,6 +50,7 @@ class ContentActivity : AppCompatActivity() {
     private lateinit var btnApplyEdit: FloatingActionButton
     private lateinit var btnFinish: FloatingActionButton
     private lateinit var btnReportEdit: FloatingActionButton
+    private lateinit var btnExport: FloatingActionButton
 
     private lateinit var responseStateContainer: LinearLayout
     private lateinit var btnReturnEdit: Button
@@ -62,7 +68,25 @@ class ContentActivity : AppCompatActivity() {
                 val uri = result.data?.data ?: return@registerForActivityResult
                 currentFileUri = uri
                 this.writeFileContent(uri, this.pendingContentToSave)
-                Toast.makeText(this, "Archivo guardado correctamente", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Archivo .form guardado correctamente", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+
+    private val createPkmFileLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                writePkmFile(
+                    uri,
+                    pendingExportAuthor,
+                    pendingExportDescription
+                )
+                Toast.makeText(this, "Archivo .pkm exportado correctamente", Toast.LENGTH_SHORT)
+                    .show()
+
+                pendingExportAuthor = ""
+                pendingExportDescription = ""
             }
         }
 
@@ -96,6 +120,7 @@ class ContentActivity : AppCompatActivity() {
         this.btnFinish = findViewById(R.id.btnFinish)
         this.btnReportEdit = findViewById(R.id.btnReportEdit)
         this.btnReportEdit.isEnabled = false
+        this.btnExport = findViewById(R.id.btnExport)
 
         this.responseStateContainer = findViewById(R.id.responseStateContainer)
         this.btnReturnEdit = findViewById(R.id.btnReturnEdit)
@@ -137,6 +162,10 @@ class ContentActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        this.btnExport.setOnClickListener {
+            showExportDialog()
+        }
+
         this.btnReturnEdit.setOnClickListener {
             this.switchState(ScreenState.EDIT)
         }
@@ -167,7 +196,7 @@ class ContentActivity : AppCompatActivity() {
 
         this.etCode.setText(content)
 
-        if (content.isNotEmpty()) {
+        if (content.isNotEmpty() && mode != MainActivity.SAVED_MODE) {
             this.renderComponents(content)
         }
 
@@ -199,6 +228,67 @@ class ContentActivity : AppCompatActivity() {
                 this.savedStateContainer.visibility = View.VISIBLE
             }
         }
+    }
+
+    private fun showExportDialog() {
+        val dialog = SaveDialog.newInstance()
+
+        dialog.onExportConfirmed = { author, description ->
+            pendingExportAuthor = author
+            pendingExportDescription = description
+
+            this.launchPkmFilePicker()
+        }
+
+        dialog.show(supportFragmentManager, SaveDialog.TAG)
+    }
+
+    private fun launchPkmFilePicker() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/octet-stream"
+            putExtra(Intent.EXTRA_TITLE, "guardado.pkm")
+        }
+        this.createPkmFileLauncher.launch(intent)
+    }
+
+    private fun writePkmFile(
+        uri: Uri,
+        author: String,
+        description: String
+    ) {
+        val content = this.buildPkmContent(
+            author,
+            description
+        )
+        this.writeFileContent(uri, content)
+    }
+
+    private fun buildPkmContent(
+        author: String,
+        description: String
+    ): String {
+        val analyzer = FormAnalyzer()
+        val result: String = analyzer.analyze(this.etCode.text.toString())
+        if (analyzer.errors.isEmpty()) {
+            this.btnReportEdit.isEnabled = false
+        } else {
+            Toast.makeText(
+                this,
+                "Se encontraron errores en el codigo. Revise el Reporte de Errores",
+                Toast.LENGTH_LONG
+            )
+                .show()
+            this.errorReport = analyzer.errors
+            this.btnReportEdit.isEnabled = true
+        }
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Mensaje!!!")
+        builder.setMessage(result)
+        builder.setPositiveButton("Aceptar") { dialog, which -> }
+        builder.show()
+        val doc: PkmDocument = PkmTranslator(author, description).translate(analyzer.interpreter)
+        return doc.generateContent()
     }
 
     private fun renderComponents(code: String) {

@@ -54,9 +54,9 @@ class MainActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val uri = result.data?.data ?: return@registerForActivityResult
-                navigateToContent(
+                this.navigateToContent(
                     SAVED_MODE,
-                    readFileContent(uri),
+                    this.readFileContent(uri),
                     uri.toString()
                 )
             }
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         val btnCreateForm = findViewById<Button>(R.id.btnCreateForm)
 
         btnOpenForm.setOnClickListener {
-            this.openFilePicker(openFormLauncher)
+            this.openFilePicker(this.openFormLauncher)
         }
 
         btnOpenSaveFile.setOnClickListener {
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnOpenCode.setOnClickListener {
-            this.openFilePicker(openCodeLauncher)
+            this.openFilePicker(this.openCodeLauncher)
         }
 
         btnCreateForm.setOnClickListener {
