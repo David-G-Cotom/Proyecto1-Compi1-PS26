@@ -8,75 +8,73 @@ package com.example.proyecto1_compi1_ps26.domain.analyzers.saved_pkm;
 /** CUP generated class containing symbol constants. */
 public class symPKM {
   /* terminals */
-  public static final int DIAGONAL = 51;
+  public static final int DIAGONAL = 50;
   public static final int DESCRIPTION = 7;
-  public static final int FONT_FAMILY_ETIQUETA = 19;
+  public static final int FONT_FAMILY_ETIQUETA = 17;
   public static final int TOTAL_PREGUNTAS = 9;
-  public static final int LLAVE_ABIERTO = 54;
-  public static final int COLOR_ETIQUETA = 17;
-  public static final int SECTION_ETIQUETA = 22;
-  public static final int WHITE = 38;
-  public static final int INPUT_HORA = 15;
-  public static final int RESTA = 60;
-  public static final int DOUBLE = 46;
-  public static final int MONO = 41;
-  public static final int ELEMENT_ETIQUETA = 26;
-  public static final int OPEN_ETIQUETA = 27;
+  public static final int LLAVE_ABIERTO = 53;
+  public static final int COLOR_ETIQUETA = 15;
+  public static final int SECTION_ETIQUETA = 20;
+  public static final int WHITE = 37;
+  public static final int RESTA = 59;
+  public static final int DOUBLE = 45;
+  public static final int MONO = 40;
+  public static final int ELEMENT_ETIQUETA = 24;
+  public static final int OPEN_ETIQUETA = 26;
   public static final int DOS_PUNTOS = 3;
-  public static final int BACKGROUND_COLOR_ETIQUETA = 18;
+  public static final int BACKGROUND_COLOR_ETIQUETA = 16;
   public static final int FECHA = 5;
-  public static final int PARENTESIS_ABIERTO = 52;
+  public static final int PARENTESIS_ABIERTO = 51;
   public static final int SEPARADOR = 2;
-  public static final int RED = 31;
-  public static final int INPUT_FECHA = 14;
-  public static final int STYLE_ETIQUETA = 16;
-  public static final int HORIZONTAL = 40;
-  public static final int IGUAL = 49;
-  public static final int MULTIPLE_ETIQUETA = 30;
-  public static final int TABLE_ETIQUETA = 24;
-  public static final int DROP_ETIQUETA = 28;
+  public static final int RED = 30;
+  public static final int STYLE_ETIQUETA = 14;
+  public static final int HORIZONTAL = 39;
+  public static final int IGUAL = 48;
+  public static final int MULTIPLE_ETIQUETA = 29;
+  public static final int TABLE_ETIQUETA = 22;
+  public static final int DROP_ETIQUETA = 27;
+  public static final int TEXT_ETIQUETA = 25;
   public static final int TOTAL_SECCIONES = 8;
-  public static final int LINE_ETIQUETA = 25;
-  public static final int CURSIVE = 43;
-  public static final int SUMA = 59;
-  public static final int VERTICAL = 39;
-  public static final int ID = 57;
+  public static final int LINE_ETIQUETA = 23;
+  public static final int CURSIVE = 42;
+  public static final int SUMA = 58;
+  public static final int VERTICAL = 38;
+  public static final int ID = 56;
   public static final int EOF = 0;
   public static final int error = 1;
-  public static final int COMA = 50;
-  public static final int CONTENT_ETIQUETA = 23;
-  public static final int MODULO = 64;
-  public static final int LINE = 44;
-  public static final int MENOR = 47;
-  public static final int NUMERO_DECIMAL_NEGATIVO = 66;
-  public static final int SELECT_ETIQUETA = 29;
-  public static final int MAYOR = 48;
+  public static final int COMA = 49;
+  public static final int CONTENT_ETIQUETA = 21;
+  public static final int MODULO = 62;
+  public static final int LINE = 43;
+  public static final int MENOR = 46;
+  public static final int NUMERO_DECIMAL_NEGATIVO = 64;
+  public static final int SELECT_ETIQUETA = 28;
+  public static final int MAYOR = 47;
   public static final int MULTIPLES = 13;
-  public static final int NUMERO_ENTERO_NEGATIVO = 68;
-  public static final int POTENCIA = 63;
-  public static final int BORDER_ETIQUETA = 21;
+  public static final int NUMERO_ENTERO_NEGATIVO = 66;
+  public static final int POTENCIA = 61;
+  public static final int BORDER_ETIQUETA = 19;
   public static final int SELECCION = 12;
-  public static final int NUMERO_DECIMAL = 65;
-  public static final int LLAVE_CERRADO = 55;
-  public static final int YELLOW = 36;
+  public static final int NUMERO_DECIMAL = 63;
+  public static final int LLAVE_CERRADO = 54;
+  public static final int YELLOW = 35;
   public static final int AUTHOR = 4;
-  public static final int SANS_SERIF = 42;
-  public static final int BLUE = 32;
-  public static final int HEXADECIMAL = 56;
-  public static final int PARENTESIS_CERRADO = 53;
-  public static final int TEXTO = 58;
-  public static final int PURPLE = 34;
+  public static final int SANS_SERIF = 41;
+  public static final int BLUE = 31;
+  public static final int HEXADECIMAL = 55;
+  public static final int PARENTESIS_CERRADO = 52;
+  public static final int TEXTO = 57;
+  public static final int PURPLE = 33;
   public static final int ABIERTAS = 10;
-  public static final int GREEN = 33;
-  public static final int DIVISION = 62;
-  public static final int NUMERO_ENTERO = 67;
-  public static final int BLACK = 37;
-  public static final int TEXT_SIZE_ETIQUETA = 20;
+  public static final int GREEN = 32;
+  public static final int NUMERO_ENTERO = 65;
+  public static final int BLACK = 36;
+  public static final int TEXT_SIZE_ETIQUETA = 18;
   public static final int DESPLEGABLES = 11;
   public static final int HORA = 6;
-  public static final int DOTTED = 45;
-  public static final int SKY = 35;
-  public static final int MULTIPLICACION = 61;
+  public static final int DOTTED = 44;
+  public static final int SKY = 34;
+  public static final int MULTIPLICACION = 60;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
@@ -92,8 +90,6 @@ public class symPKM {
   "DESPLEGABLES",
   "SELECCION",
   "MULTIPLES",
-  "INPUT_FECHA",
-  "INPUT_HORA",
   "STYLE_ETIQUETA",
   "COLOR_ETIQUETA",
   "BACKGROUND_COLOR_ETIQUETA",
@@ -105,6 +101,7 @@ public class symPKM {
   "TABLE_ETIQUETA",
   "LINE_ETIQUETA",
   "ELEMENT_ETIQUETA",
+  "TEXT_ETIQUETA",
   "OPEN_ETIQUETA",
   "DROP_ETIQUETA",
   "SELECT_ETIQUETA",
@@ -140,7 +137,6 @@ public class symPKM {
   "SUMA",
   "RESTA",
   "MULTIPLICACION",
-  "DIVISION",
   "POTENCIA",
   "MODULO",
   "NUMERO_DECIMAL",

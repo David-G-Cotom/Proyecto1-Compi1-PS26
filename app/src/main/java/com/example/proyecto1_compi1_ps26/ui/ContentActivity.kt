@@ -20,6 +20,7 @@ import com.example.proyecto1_compi1_ps26.MainActivity
 import com.example.proyecto1_compi1_ps26.R
 import androidx.core.net.toUri
 import com.example.proyecto1_compi1_ps26.domain.analyzers.form_creation.FormAnalyzer
+import com.example.proyecto1_compi1_ps26.domain.analyzers.saved_pkm.PkmAnalyzer
 import com.example.proyecto1_compi1_ps26.domain.entities.ErrorReport
 import com.example.proyecto1_compi1_ps26.domain.entities.FormRenderer
 import com.example.proyecto1_compi1_ps26.domain.translation.PkmDocument
@@ -175,7 +176,25 @@ class ContentActivity : AppCompatActivity() {
         }
 
         this.btnApplySaved.setOnClickListener {
-            // HACER EL ANALISIS DEL CODIGO .pkm
+            val analyzer = PkmAnalyzer()
+            val result: String = analyzer.analyze(this.etCode.text.toString())
+            if (analyzer.errors.isEmpty()) {
+                this.btnReportSaved.isEnabled = false
+            } else {
+                Toast.makeText(
+                    this,
+                    "Se encontraron errores en el codigo. Revise el Reporte de Errores",
+                    Toast.LENGTH_LONG
+                )
+                    .show()
+                this.errorReport = analyzer.errors
+                this.btnReportSaved.isEnabled = true
+            }
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Mensaje!!!")
+            builder.setMessage(result)
+            builder.setPositiveButton("Aceptar") { dialog, which -> }
+            builder.show()
         }
 
         this.btnReportSaved.setOnClickListener {

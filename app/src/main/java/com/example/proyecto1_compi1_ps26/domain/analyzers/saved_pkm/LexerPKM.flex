@@ -65,7 +65,7 @@ LineTerminator = \r|\n|\n\r|\r\n
 WhiteSpace = [ \t\f]
 InputCharacter = [^\r\n]
 Dot = \.
-WholeNumber = 0|[1-9][0-9]*
+WholeNumber = [0-9][0-9]*
 DecimalNumber = {WholeNumber}{Dot}[0-9]+
 Letter = [a-zA-Z]
 ID = _?{Letter}({Letter}|_|{WholeNumber})*
@@ -81,31 +81,29 @@ ID = _?{Letter}({Letter}|_|{WholeNumber})*
     "###"                    { return symbol(symPKM.SEPARADOR); }
     ":"                  { return symbol(symPKM.DOS_PUNTOS); }
 
+    "Total de Secciones"                { return symbol(symPKM.TOTAL_SECCIONES); }
+    "Total de Preguntas"                   { return symbol(symPKM.TOTAL_PREGUNTAS); }
     "Author"                  { return symbol(symPKM.AUTHOR); }
     "Fecha"                     { return symbol(symPKM.FECHA); }
     "Hora"                      { return symbol(symPKM.HORA); }
     "Description"                { return symbol(symPKM.DESCRIPTION); }
-    "Total de Secciones"                { return symbol(symPKM.TOTAL_SECCIONES); }
-    "Total de Preguntas"                   { return symbol(symPKM.TOTAL_PREGUNTAS); }
     "Abiertas"                     { return symbol(symPKM.ABIERTAS); }
     "Desplegables"                 { return symbol(symPKM.DESPLEGABLES); }
     "Seleccion"                    { return symbol(symPKM.SELECCION); }
     "Multiples"                  { return symbol(symPKM.MULTIPLES); }
 
-    {WholeNumber}"/"{WholeNumber}"/"{WholeNumber}                 { return symbol(symPKM.INPUT_FECHA); }
-    {WholeNumber}":"{WholeNumber}           { return symbol(symPKM.INPUT_HORA); }
-
-    "style"              { return symbol(symPKM.STYLE_ETIQUETA); }
-    "color"   { return symbol(symPKM.COLOR_ETIQUETA); }
     "background color"   { return symbol(symPKM.BACKGROUND_COLOR_ETIQUETA); }
     "font family"   { return symbol(symPKM.FONT_FAMILY_ETIQUETA); }
     "text size"   { return symbol(symPKM.TEXT_SIZE_ETIQUETA); }
+    "style"              { return symbol(symPKM.STYLE_ETIQUETA); }
+    "color"   { return symbol(symPKM.COLOR_ETIQUETA); }
     "border"   { return symbol(symPKM.BORDER_ETIQUETA); }
     "section"   { return symbol(symPKM.SECTION_ETIQUETA); }
     "content"   { return symbol(symPKM.CONTENT_ETIQUETA); }
     "table"   { return symbol(symPKM.TABLE_ETIQUETA); }
     "line"   { return symbol(symPKM.LINE_ETIQUETA); }
     "element"   { return symbol(symPKM.ELEMENT_ETIQUETA); }
+    "text"                      { return symbol(symPKM.TEXT_ETIQUETA); }
     "open"   { return symbol(symPKM.OPEN_ETIQUETA); }
     "drop"   { return symbol(symPKM.DROP_ETIQUETA); }
     "select"   { return symbol(symPKM.SELECT_ETIQUETA); }
@@ -141,10 +139,12 @@ ID = _?{Letter}({Letter}|_|{WholeNumber})*
     "{" { return symbol(symPKM.LLAVE_ABIERTO); }
     "}" { return symbol(symPKM.LLAVE_CERRADO); }
 
+    "-"{WholeNumber}   { return symbol(symPKM.NUMERO_ENTERO_NEGATIVO, Integer.parseInt(yytext())); }
+    "-"{DecimalNumber} { return symbol(symPKM.NUMERO_DECIMAL_NEGATIVO, Double.parseDouble(yytext())); }
+
     "+" { return symbol(symPKM.SUMA); }
     "-" { return symbol(symPKM.RESTA); }
     "*" { return symbol(symPKM.MULTIPLICACION); }
-    "/" { return symbol(symPKM.DIVISION); }
     "^" { return symbol(symPKM.POTENCIA); }
     "%" { return symbol(symPKM.MODULO); }
 
@@ -165,8 +165,6 @@ ID = _?{Letter}({Letter}|_|{WholeNumber})*
 
     {WholeNumber}   { return symbol(symPKM.NUMERO_ENTERO, Integer.parseInt(yytext())); }
     {DecimalNumber} { return symbol(symPKM.NUMERO_DECIMAL, Double.parseDouble(yytext())); }
-    "-"{WholeNumber}   { return symbol(symPKM.NUMERO_ENTERO_NEGATIVO, Integer.parseInt(yytext())); }
-    "-"{DecimalNumber} { return symbol(symPKM.NUMERO_DECIMAL_NEGATIVO, Double.parseDouble(yytext())); }
     {ID}            { return symbol(symPKM.ID, yytext()); }
 }
 

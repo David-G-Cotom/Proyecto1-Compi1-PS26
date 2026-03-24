@@ -19,16 +19,16 @@ class PkmMetadata(
 
     override fun render(indent: Int) = buildString {
         appendLine("###")
-        appendLine("    Author: $author")
+        appendLine("    Author: \"$author\"")
         appendLine("    Fecha: $date")
         appendLine("    Hora: $time")
-        appendLine("    Description: $description")
+        appendLine("    Description: \"$description\"")
         appendLine("    Total de Secciones: $totalSections")
         appendLine("    Total de Preguntas: $totalQuestions")
         appendLine("        Abiertas: $totalOpen")
         appendLine("        Desplegables: $totalDrop")
-        appendLine("        Selección: $totalSelect")
-        appendLine("        Múltiples: $totalMultiple")
+        appendLine("        Seleccion: $totalSelect")
+        appendLine("        Multiples: $totalMultiple")
         append("###")
     }
 

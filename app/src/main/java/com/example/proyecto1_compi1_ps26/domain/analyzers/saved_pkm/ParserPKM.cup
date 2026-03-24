@@ -68,7 +68,7 @@ parser code {:
             symbol = symbl_name_from_id(cur_token.sym);
             line = cur_token.left;
             column = cur_token.right;
-            if (cur_token != null) {
+            if (cur_token.value != null) {
                 lexeme = cur_token.value.toString();
             }
             if (message != null) {
@@ -90,8 +90,11 @@ parser code {:
 // Tokens - Terminales
 terminal SEPARADOR, DOS_PUNTOS;
 terminal AUTHOR, FECHA, HORA, DESCRIPTION, TOTAL_SECCIONES, TOTAL_PREGUNTAS, ABIERTAS, DESPLEGABLES, SELECCION, MULTIPLES;
-terminal INPUT_FECHA, INPUT_HORA;
-terminal STYLE_ETIQUETA, COLOR_ETIQUETA, BACKGROUND_COLOR_ETIQUETA, FONT_FAMILY_ETIQUETA, TEXT_SIZE_ETIQUETA, BORDER_ETIQUETA, SECTION_ETIQUETA, CONTENT_ETIQUETA, TABLE_ETIQUETA, LINE_ETIQUETA, ELEMENT_ETIQUETA, OPEN_ETIQUETA, DROP_ETIQUETA, SELECT_ETIQUETA, MULTIPLE_ETIQUETA;
+terminal STYLE_ETIQUETA, COLOR_ETIQUETA, BACKGROUND_COLOR_ETIQUETA;
+terminal FONT_FAMILY_ETIQUETA, TEXT_SIZE_ETIQUETA, BORDER_ETIQUETA;
+terminal SECTION_ETIQUETA, CONTENT_ETIQUETA, TABLE_ETIQUETA;
+terminal LINE_ETIQUETA, ELEMENT_ETIQUETA;
+terminal TEXT_ETIQUETA, OPEN_ETIQUETA, DROP_ETIQUETA, SELECT_ETIQUETA, MULTIPLE_ETIQUETA;
 terminal RED, BLUE, GREEN, PURPLE, SKY, YELLOW, BLACK, WHITE;
 terminal VERTICAL, HORIZONTAL;
 terminal MONO, SANS_SERIF, CURSIVE;
@@ -100,7 +103,7 @@ terminal MENOR, MAYOR, IGUAL, COMA, DIAGONAL, PARENTESIS_ABIERTO, PARENTESIS_CER
 terminal HEXADECIMAL;
 terminal ID;
 terminal TEXTO;
-terminal SUMA, RESTA, MULTIPLICACION, DIVISION, POTENCIA, MODULO;
+terminal SUMA, RESTA, MULTIPLICACION, POTENCIA, MODULO;
 
 terminal Double NUMERO_DECIMAL;
 terminal Double NUMERO_DECIMAL_NEGATIVO;
@@ -110,58 +113,69 @@ terminal Integer NUMERO_ENTERO, NUMERO_ENTERO_NEGATIVO;
 non terminal fuente_entrada, metadatos, contenido;
 non terminal operacion_matematica;
 non terminal etiqueta, seccion, tabla, texto, pregunta;
-non terminal estilo, contenido_estilo;
+non terminal estilo, lista_entrada_estilo, entrada_estilo;
 non terminal color, tipo_fuente, tipo_borde;
 non terminal rgb, hsl, color_literal;
-non terminal tipo_orientacion, etiqueta_contenido;
-non terminal contenido_etiqueta_content, lista_elemento, lista_elemento_tabla;
+non terminal tipo_orientacion;
+non terminal lista_elemento, lista_elemento_tabla;
 non terminal elemento;
 non terminal linea_tabla, lista_elemento_linea;
 non terminal cierre_etiqueta_texto;
-non terminal pregunta_desplegable, pregunta_seleccion_unica, pregunta_seleccion_multiple;
+non terminal pregunta_abierta, pregunta_desplegable, pregunta_seleccion_unica, pregunta_seleccion_multiple;
 non terminal concatenacion_string, lista_opcion, numero_entero;
-non terminal cierre_etiqueta_pregunta_desplegable, cierre_etiqueta_pregunta_seleccion_unica, cierre_etiqueta_pregunta_seleccion_multiple;
+non terminal cierre_etiqueta_open, cierre_etiqueta_pregunta_desplegable, cierre_etiqueta_pregunta_seleccion_unica, cierre_etiqueta_pregunta_seleccion_multiple;
 non terminal opcion_correcto, lista_correcto;
 non terminal operador_sr, t, operador_md, g, operador_pm, f;
 non terminal operacion_string;
+non terminal contenido_seccion, tabla_contenido, texto_contenido;
+non terminal open_contenido, drop_contenido, select_contenido, multiple_contenido;
 
 /***************************************** PRECEDENCES *****************************************/
 precedence left SUMA, RESTA;
-precedence left MULTIPLICACION, DIVISION;
+precedence left MULTIPLICACION;
 precedence right POTENCIA;
 precedence left MODULO;
 
 /***************************************** GRAMMAR *****************************************/
 start with fuente_entrada;
 
-fuente_entrada ::= SEPARADOR metadatos SEPARADOR contenido;
+fuente_entrada ::= SEPARADOR metadatos SEPARADOR contenido |
+                    SEPARADOR metadatos SEPARADOR |
+                    SEPARADOR error SEPARADOR contenido |
+                    SEPARADOR error SEPARADOR;
 
-metadatos ::= AUTHOR DOS_PUNTOS ID
-                FECHA DOS_PUNTOS INPUT_FECHA
-                HORA DOS_PUNTOS INPUT_HORA
+metadatos ::= AUTHOR DOS_PUNTOS TEXTO
+                FECHA DOS_PUNTOS numero_entero DIAGONAL numero_entero DIAGONAL numero_entero
+                HORA DOS_PUNTOS numero_entero DOS_PUNTOS numero_entero
                 DESCRIPTION DOS_PUNTOS TEXTO
-                TOTAL_SECCIONES DOS_PUNTOS operacion_matematica
-                TOTAL_PREGUNTAS DOS_PUNTOS operacion_matematica
-                ABIERTAS DOS_PUNTOS operacion_matematica
-                DESPLEGABLES DOS_PUNTOS operacion_matematica
-                SELECCION DOS_PUNTOS operacion_matematica
-                MULTIPLES DOS_PUNTOS operacion_matematica;
+                TOTAL_SECCIONES DOS_PUNTOS numero_entero
+                TOTAL_PREGUNTAS DOS_PUNTOS numero_entero
+                ABIERTAS DOS_PUNTOS numero_entero
+                DESPLEGABLES DOS_PUNTOS numero_entero
+                SELECCION DOS_PUNTOS numero_entero
+                MULTIPLES DOS_PUNTOS numero_entero;
 
 contenido ::= contenido etiqueta |
-            etiqueta;
+            contenido error |
+            etiqueta |
+            error;
 
 etiqueta ::= seccion |
             tabla |
             texto |
             pregunta;
 
-estilo ::= MENOR STYLE_ETIQUETA MAYOR contenido_estilo MENOR DIAGONAL STYLE_ETIQUETA MAYOR;
+estilo ::= MENOR STYLE_ETIQUETA MAYOR lista_entrada_estilo MENOR DIAGONAL STYLE_ETIQUETA MAYOR;
 
-contenido_estilo ::= MENOR COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR
-                    MENOR BACKGROUND_COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR
-                    MENOR FONT_FAMILY_ETIQUETA IGUAL tipo_fuente DIAGONAL MAYOR
-                    MENOR TEXT_SIZE_ETIQUETA IGUAL operacion_matematica DIAGONAL MAYOR
-                    MENOR BORDER_ETIQUETA COMA operacion_matematica COMA tipo_borde COMA COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR;
+lista_entrada_estilo ::= lista_entrada_estilo entrada_estilo |
+                        lista_entrada_estilo error |
+                        /* vacío */;
+
+entrada_estilo ::= MENOR COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR |
+    MENOR BACKGROUND_COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR |
+    MENOR FONT_FAMILY_ETIQUETA IGUAL tipo_fuente DIAGONAL MAYOR |
+    MENOR TEXT_SIZE_ETIQUETA IGUAL operacion_matematica MAYOR |
+    MENOR BORDER_ETIQUETA COMA operacion_matematica COMA tipo_borde COMA COLOR_ETIQUETA IGUAL color DIAGONAL MAYOR;
 
 color ::= HEXADECIMAL |
         rgb |
@@ -183,20 +197,19 @@ color_literal ::= RED |
 
 tipo_fuente ::= MONO | SANS_SERIF | CURSIVE;
 
-tipo_borde ::= LINE | DOTTED | DOUBLE;
+tipo_borde ::= LINE | DOTTED | DOUBLE | LINE_ETIQUETA;
 
 seccion ::= MENOR SECTION_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA operacion_matematica COMA operacion_matematica COMA tipo_orientacion MAYOR
-            estilo
-            MENOR CONTENT_ETIQUETA MAYOR lista_elemento MENOR DIAGONAL CONTENT_ETIQUETA MAYOR
+            contenido_seccion
             MENOR DIAGONAL SECTION_ETIQUETA MAYOR;
+
+contenido_seccion ::= estilo MENOR CONTENT_ETIQUETA MAYOR lista_elemento MENOR DIAGONAL CONTENT_ETIQUETA MAYOR
+                    | MENOR CONTENT_ETIQUETA MAYOR lista_elemento MENOR DIAGONAL CONTENT_ETIQUETA MAYOR;
 
 tipo_orientacion ::= VERTICAL | HORIZONTAL;
 
-//etiqueta_contenido ::= MENOR CONTENT_ETIQUETA MAYOR contenido_etiqueta_content MENOR DIAGONAL CONTENT_ETIQUETA MAYOR;
-
-//contenido_etiqueta_content ::= lista_elemento | lista_elemento_tabla;
-
 lista_elemento ::= lista_elemento elemento |
+                    lista_elemento error |
                     elemento;
 
 elemento ::= seccion |
@@ -205,51 +218,82 @@ elemento ::= seccion |
             texto;
 
 lista_elemento_tabla ::= lista_elemento_tabla linea_tabla |
+                        lista_elemento_tabla error |
                         linea_tabla;
 
 linea_tabla ::= MENOR LINE_ETIQUETA MAYOR lista_elemento_linea MENOR DIAGONAL LINE_ETIQUETA MAYOR;
 
 lista_elemento_linea ::= lista_elemento_linea MENOR ELEMENT_ETIQUETA MAYOR elemento MENOR DIAGONAL ELEMENT_ETIQUETA MAYOR |
+                        lista_elemento_linea error |
                         MENOR ELEMENT_ETIQUETA MAYOR elemento MENOR DIAGONAL ELEMENT_ETIQUETA MAYOR;
 
-tabla ::= MENOR TABLE_ETIQUETA MAYOR
-        estilo
-        MENOR CONTENT_ETIQUETA MAYOR lista_elemento_tabla MENOR DIAGONAL CONTENT_ETIQUETA MAYOR
+tabla ::= MENOR TABLE_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA operacion_matematica COMA operacion_matematica MAYOR
+        tabla_contenido
         MENOR DIAGONAL TABLE_ETIQUETA MAYOR;
 
-texto ::= MENOR OPEN_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA TEXTO cierre_etiqueta_texto;
+tabla_contenido ::= estilo MENOR CONTENT_ETIQUETA MAYOR lista_elemento_tabla MENOR DIAGONAL CONTENT_ETIQUETA MAYOR
+                  | MENOR CONTENT_ETIQUETA MAYOR lista_elemento_tabla MENOR DIAGONAL CONTENT_ETIQUETA MAYOR;
+
+texto ::= MENOR TEXT_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA TEXTO cierre_etiqueta_texto;
 
 cierre_etiqueta_texto ::= DIAGONAL MAYOR |
-                            MAYOR estilo MENOR DIAGONAL OPEN_ETIQUETA MAYOR;
+                            MAYOR texto_contenido;
 
-pregunta ::= pregunta_desplegable |
+texto_contenido ::= estilo MENOR DIAGONAL TEXT_ETIQUETA MAYOR
+                  | MENOR DIAGONAL TEXT_ETIQUETA MAYOR;
+
+pregunta ::= pregunta_abierta |
+            pregunta_desplegable |
             pregunta_seleccion_unica |
             pregunta_seleccion_multiple;
+
+pregunta_abierta ::= MENOR OPEN_ETIQUETA IGUAL
+                        operacion_matematica COMA
+                        operacion_matematica COMA
+                        TEXTO
+                    cierre_etiqueta_open;
+
+cierre_etiqueta_open ::= DIAGONAL MAYOR |
+                        MAYOR open_contenido;
+
+open_contenido ::= estilo MENOR DIAGONAL OPEN_ETIQUETA MAYOR
+                 | MENOR DIAGONAL OPEN_ETIQUETA MAYOR;
 
 pregunta_desplegable ::= MENOR DROP_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA concatenacion_string COMA LLAVE_ABIERTO lista_opcion LLAVE_CERRADO COMA numero_entero cierre_etiqueta_pregunta_desplegable;
 
 lista_opcion ::= lista_opcion COMA concatenacion_string |
+                lista_opcion COMA error |
                 concatenacion_string;
 
 numero_entero ::= NUMERO_ENTERO | NUMERO_ENTERO_NEGATIVO;
 
 cierre_etiqueta_pregunta_desplegable ::= DIAGONAL MAYOR |
-                                    MAYOR estilo MENOR DIAGONAL DROP_ETIQUETA MAYOR;
+                                    MAYOR drop_contenido;
+
+drop_contenido ::= estilo MENOR DIAGONAL DROP_ETIQUETA MAYOR
+                 | MENOR DIAGONAL DROP_ETIQUETA MAYOR;
 
 pregunta_seleccion_unica ::= MENOR SELECT_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA concatenacion_string COMA LLAVE_ABIERTO lista_opcion LLAVE_CERRADO COMA numero_entero cierre_etiqueta_pregunta_seleccion_unica;
 
 cierre_etiqueta_pregunta_seleccion_unica ::= DIAGONAL MAYOR |
-                                             MAYOR estilo MENOR DIAGONAL SELECT_ETIQUETA MAYOR;
+                                             MAYOR select_contenido;
 
-pregunta_seleccion_multiple ::= MENOR MULTIPLE_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA concatenacion_string COMA LLAVE_ABIERTO lista_opcion LLAVE_CERRADO COMA LLAVE_ABIERTO opcion_correcto LLAVE_CERRADO COMA cierre_etiqueta_pregunta_seleccion_multiple;
+select_contenido ::= estilo MENOR DIAGONAL SELECT_ETIQUETA MAYOR
+                 | MENOR DIAGONAL SELECT_ETIQUETA MAYOR;
+
+pregunta_seleccion_multiple ::= MENOR MULTIPLE_ETIQUETA IGUAL operacion_matematica COMA operacion_matematica COMA concatenacion_string COMA LLAVE_ABIERTO lista_opcion LLAVE_CERRADO COMA LLAVE_ABIERTO opcion_correcto LLAVE_CERRADO cierre_etiqueta_pregunta_seleccion_multiple;
 
 opcion_correcto ::= lista_correcto | /* empty */;
 
 lista_correcto ::= lista_correcto COMA operacion_matematica |
+                    lista_correcto COMA error |
                     operacion_matematica;
 
 cierre_etiqueta_pregunta_seleccion_multiple ::= DIAGONAL MAYOR |
-                                                 MAYOR estilo MENOR DIAGONAL MULTIPLE_ETIQUETA MAYOR;
+                                                 MAYOR multiple_contenido;
+
+multiple_contenido ::= estilo MENOR DIAGONAL MULTIPLE_ETIQUETA MAYOR
+                 | MENOR DIAGONAL MULTIPLE_ETIQUETA MAYOR;
 
 operacion_matematica ::= operacion_matematica operador_sr t |
                             t;
@@ -262,14 +306,15 @@ g ::= g operador_pm f |
 
 f ::= PARENTESIS_ABIERTO operacion_matematica PARENTESIS_CERRADO |
         NUMERO_DECIMAL |
+        NUMERO_DECIMAL_NEGATIVO |
         NUMERO_ENTERO |
+        NUMERO_ENTERO_NEGATIVO |
         ID;
 
 operador_sr ::= SUMA |
                 RESTA;
 
-operador_md ::= MULTIPLICACION |
-                DIVISION;
+operador_md ::= MULTIPLICACION;
 
 operador_pm ::= POTENCIA |
                 MODULO;
